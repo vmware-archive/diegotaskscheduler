@@ -1,4 +1,4 @@
-(ns ^:figwheel-always diegoscheduler.core
+(ns diegoscheduler.core
     (:require
      [reagent.core :as reagent :refer [atom]]
      [chord.client :refer [ws-ch]]
