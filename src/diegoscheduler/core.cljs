@@ -2,19 +2,27 @@
     (:require
      [reagent.core :as reagent :refer [atom]]
      [chord.client :refer [ws-ch]]
-     [cljs.core.async :refer [<! >! put! close!]])
-    (:require-macros [cljs.core.async.macros :refer [go]]))
+     [cljs.core.async :refer [<! >! put! close! chan]])
+    (:require-macros [cljs.core.async.macros :refer [go go-loop]]))
 
 (enable-console-print!)
 
+(def task-id (atom 1))
+(def upch (chan))
+
 (go
   (let [{:keys [ws-channel error]} (<! (ws-ch "ws://localhost:8080/ws"))]
-    (if-not error
-      (>! ws-channel "Hello server from client!")
-      (js/console.log "Error:" (pr-str error)))))
+    (if error
+      (js/console.log "Error:" (pr-str error))
+      (go-loop []
+        (when-let [msg (<! upch)]
+          (>! ws-channel msg)
+          (recur)))
+      )))
 
-
-(def task-id (atom 1))
+(defn task-inc []
+  (swap! task-id inc)
+  (put! upch (str "Sending task " @task-id)))
 
 (defn page []
   [:div
@@ -22,7 +30,7 @@
    [:div
     [:h2 "Controls"]
     [:button#add-task {:name (str "task" @task-id)
-                       :on-click #(swap! task-id inc)} "Add Task " @task-id]]
+                       :on-click task-inc} "Add Task " @task-id]]
    [:div
     [:h2 "Successful Tasks"]]
    [:div
