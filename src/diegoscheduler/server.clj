@@ -4,7 +4,7 @@
             [compojure.route :as route]
             [ring.util.response :refer [resource-response]]
             [chord.http-kit :refer [wrap-websocket-handler]]
-            [clojure.core.async :refer [<! >! put! close! go-loop]])
+            [clojure.core.async :refer [<! >! put! close! go-loop go]])
   (:gen-class))
 
 (defn ws-handler [{:keys [ws-channel] :as req}]

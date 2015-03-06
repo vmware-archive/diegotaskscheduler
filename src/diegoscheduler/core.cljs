@@ -14,11 +14,17 @@
   (let [{:keys [ws-channel error]} (<! (ws-ch "ws://localhost:8080/ws"))]
     (if error
       (js/console.log "Error:" (pr-str error))
-      (go-loop []
-        (when-let [msg (<! upch)]
-          (>! ws-channel msg)
-          (recur)))
-      )))
+      (do
+        (go-loop []
+          (when-let [msg (<! upch)]
+            (>! ws-channel msg)
+            (recur)))
+        (go-loop []
+          (when-let [message (<! ws-channel)]
+            (js/console.log (str "Got this from server: " message))
+            (recur))))
+      )
+    ))
 
 (defn task-inc []
   (swap! task-id inc)
