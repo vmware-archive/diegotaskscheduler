@@ -19,7 +19,7 @@
 
 (defroutes app
   (GET "/" [] (resource-response "index.html" {:root "public"}))
-  (GET "/ws" [] (-> ws-handler (wrap-websocket-handler {:format :transit-json})))
+  (GET "/ws" [] (-> ws-handler (wrap-websocket-handler)))
   (route/resources "/")
   (route/not-found "<h1>Page not found</h1>"))
 
