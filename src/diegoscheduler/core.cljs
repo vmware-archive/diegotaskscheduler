@@ -1,19 +1,22 @@
 (ns ^:figwheel-always diegoscheduler.core
     (:require
-              [reagent.core :as reagent :refer [atom]]))
+     [reagent.core :as reagent :refer [atom]]))
 
 (enable-console-print!)
 
-(println "Edits to this text should show up in your developer console.")
+(def task-id (atom 1))
 
-;; define your app data so that it doesn't get over-written on reload
+(defn page []
+  [:div
+   [:h1 "Task Scheduler"]
+   [:div
+    [:h2 "Controls"]
+    [:button#add-task {:name (str "task" @task-id)
+                       :on-click #(swap! task-id inc)} "Add Task " @task-id]]
+   [:div
+    [:h2 "Successful Tasks"]]
+   [:div
+    [:h2 "Failed Tasks"]]])
 
-(defonce app-state (atom {:text "Hello world!"}))
-
-(defn hello-world []
-  [:h1 (:text @app-state)])
-
-(reagent/render-component [hello-world]
+(reagent/render-component [page]
                           (. js/document (getElementById "app")))
-
-
