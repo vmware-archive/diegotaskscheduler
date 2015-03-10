@@ -28,8 +28,7 @@
               :disk_mb 1000
               :memory_mb 1000})
    (catch [:status 400] {:keys [body]}
-     body))
-  {:received (str "rootfs: " (pr-str docker-image))})
+     body)))
 
 ;;   (:require [clojure.tools.namespace.repl :refer [refresh clear]]
 ;;             [clojure.pprint :refer [pprint]]
