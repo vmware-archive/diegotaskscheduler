@@ -29,12 +29,12 @@
             (js/console.log (str "Got this from server: " message))
             (recur)))))))
 
+(defn guid [t]
+  (str "task" (:id t)))
+
 (defn inc-id [m]
   (let [with-updated-id (update-in m [:id] inc)]
     (assoc with-updated-id :guid (guid with-updated-id))))
-
-(defn guid [t]
-  (str "task" (:id t)))
 
 (defn upload-task []
   (put! upch @task)
