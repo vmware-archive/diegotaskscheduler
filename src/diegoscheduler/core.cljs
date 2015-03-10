@@ -7,12 +7,12 @@
 
 (enable-console-print!)
 
-(defonce task (atom {:id 1
-                     :guid "task1"
-                     :domain "foo"
-                     :docker-image "docker://camelpunch/s3copier"
-                     :path "/usr/local/bundle/bin/bundle"
-                     :args "exec ./copy.rb mysource mydest"}))
+(defonce new-task (atom {:id 1
+                         :guid "task1"
+                         :domain "foo"
+                         :docker-image "docker://camelpunch/s3copier"
+                         :path "/usr/local/bundle/bin/bundle"
+                         :args "exec ./copy.rb mysource mydest"}))
 (def upch (chan))
 
 (go
@@ -37,8 +37,8 @@
     (assoc with-updated-id :guid (guid with-updated-id))))
 
 (defn upload-task []
-  (put! upch @task)
-  (swap! task inc-id))
+  (put! upch @new-task)
+  (swap! new-task inc-id))
 
 (defn event-update [a attr]
   (fn [e]
@@ -63,14 +63,18 @@
      [:input#task-guid {:name "task_guid"
                         :disabled "disabled"
                         :size 9
-                        :value (guid @task)}]]
-    (input task :domain "Domain")
-    (input task :docker-image "Docker image")
-    (input task :path "Path to executable")
-    (input task :args "Arguments (space sep)")
-    [:button#add-task {:name (str "task" (:id @task))
-                       :on-click upload-task} "Add " (guid @task)]]
-   [:p (str @task)]
+                        :value (guid @new-task)}]]
+    (input new-task :domain "Domain")
+    (input new-task :docker-image "Docker image")
+    (input new-task :path "Path to executable")
+    (input new-task :args "Arguments (space sep)")
+    [:button#add-task {:name (str "task" (:id @new-task))
+                       :on-click upload-task} "Add " (guid @new-task)]]
+   [:p (str @new-task)]
+   [:div
+    [:h2 "With Diego"]
+    [:ul
+]]
    [:div
     [:h2 "Successful Tasks"]]
    [:div
