@@ -21,7 +21,8 @@
       (recur)))
   (go-loop []
     (when-let [msg (<! downch)]
-      (>! ws-channel msg))))
+      (>! ws-channel msg)
+      (recur))))
 
 (defroutes app
   (GET "/" [] (resource-response "index.html" {:root "public"}))
