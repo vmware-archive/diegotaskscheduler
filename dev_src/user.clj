@@ -1,7 +1,8 @@
 (ns user
   (:require [clojure.tools.namespace.repl :refer [refresh clear]]
             [org.httpkit.server :as http-kit]
-            [diegoscheduler.server :as server]))
+            [diegoscheduler.server :as server]
+            [diegoscheduler.diego :as diego]))
 
 (def stop (fn []))
 (defn start []
@@ -9,5 +10,8 @@
 (defn reload [] (stop) (refresh :after 'user/start))
 
 (comment
+  (refresh)
+  (clear)
   (reload)
+  (diego/remote-tasks)
   )

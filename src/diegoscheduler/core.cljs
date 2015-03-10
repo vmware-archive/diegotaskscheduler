@@ -8,6 +8,7 @@
 (enable-console-print!)
 
 (defonce task (atom {:id 1
+                     :guid "task1"
                      :domain "foo"
                      :docker-image "docker://camelpunch/s3copier"
                      :path "/usr/local/bundle/bin/bundle"
@@ -29,7 +30,8 @@
             (recur)))))))
 
 (defn inc-id [m]
-  (update-in m [:id] inc))
+  (let [with-updated-id (update-in m [:id] inc)]
+    (assoc with-updated-id :guid (guid with-updated-id))))
 
 (defn guid [t]
   (str "task" (:id t)))
@@ -41,19 +43,6 @@
 (defn event-update [a attr]
   (fn [e]
     (swap! a #(assoc % attr (-> e .-target .-value)))))
-
-;; (add-task {:domain "foo"
-;;            :task_guid guid
-;;            :log_guid guid
-;;            :stack "lucid64"
-;;            :privileged false
-;;            :rootfs "docker:///camelpunch/simplesaver"
-;;            :action {:run {:path "/usr/bin/saver"
-;;                           :args ["/tmp/storage" "foobar"]}}
-;;            :completion_callback_url completion-callback-url
-;;            :result_file "/tmp/storage"
-;;            :disk_mb 1000
-;;            :memory_mb 1000})
 
 (defn input [a key label]
   (let [id (str "task-" key)]

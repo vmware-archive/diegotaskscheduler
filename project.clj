@@ -6,6 +6,7 @@
 
   :dependencies [[org.clojure/clojure "1.6.0"]
                  [http-kit "2.1.18"]
+                 [clj-http "1.0.1"]
                  [compojure "1.3.2"]
                  [jarohen/chord "0.6.0"]
                  [org.clojure/clojurescript "0.0-2850"]
