@@ -13,5 +13,6 @@
   (refresh)
   (clear)
   (reload)
-  (diego/remote-tasks)
+  (count (:resolved @server/tasks))
+  (count (diego/remote-tasks))
   )

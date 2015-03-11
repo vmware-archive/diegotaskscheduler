@@ -8,16 +8,17 @@
             [clojure.core.async :refer [<! >! put! close! go-loop go chan]])
   (:gen-class))
 
-(def tasks (atom {:resolved []}))
-(def downch (chan))
+(def tasks (atom {:resolved []
+                  :pending []}))
+(defonce downch (chan))
 
 (defn ws-handler [{:keys [ws-channel] :as req}]
   (go-loop []
     (when-let [{:keys [message error] :as msg} (<! ws-channel)]
-      (>! ws-channel (if error
-                       (format "Error: '%s'." (pr-str msg))
-                       (diego/create-task message)
-))
+      (if error
+        (format "Error: '%s'." (pr-str msg))
+        (diego/create-task message)
+        )
       (recur)))
   (go-loop []
     (when-let [msg (<! downch)]
@@ -28,12 +29,10 @@
   (GET "/" [] (resource-response "index.html" {:root "public"}))
   (GET "/ws" [] (-> ws-handler (wrap-websocket-handler)))
   (POST "/taskfinished" {body :body}
-        (if body
-          (let [raw-task (slurp body)]
-            (swap! tasks (fn [m] (update-in m [:resolved] #(conj % raw-task))))
-            (put! downch {:tasks @tasks})
-            {:status 200})
-          {:status 400}))
+        (let [parsed-task (diego/parse-task (slurp body))]
+          (put! downch
+                (swap! tasks update-in [:resolved] conj parsed-task))
+          {:status 200}))
   (route/resources "/")
   (route/not-found "<h1>Page not found</h1>"))
 

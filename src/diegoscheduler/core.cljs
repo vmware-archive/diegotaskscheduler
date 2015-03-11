@@ -13,6 +13,9 @@
                          :docker-image "docker://camelpunch/s3copier"
                          :path "/usr/local/bundle/bin/bundle"
                          :args "exec ./copy.rb mysource mydest"}))
+(defonce tasks (atom {:with-diego []
+                      :successful []
+                      :failed []}))
 (def upch (chan))
 
 (go
