@@ -31,7 +31,7 @@
   (POST "/taskfinished" {body :body}
         (let [parsed-task (diego/parse-task (slurp body))]
           (put! downch
-                (swap! tasks update-in [:resolved] conj parsed-task))
+                {:tasks (swap! tasks update-in [:resolved] conj parsed-task)})
           {:status 200}))
   (route/resources "/")
   (route/not-found "<h1>Page not found</h1>"))

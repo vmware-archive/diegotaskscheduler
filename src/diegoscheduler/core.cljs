@@ -28,6 +28,16 @@
       :failed failed
       :successful successful)))
 
+(defn handle-tasks [new-tasks]
+  (swap! tasks update-tasks new-tasks))
+
+(def handlers
+  {:tasks handle-tasks})
+
+(defn route-message [message]
+  (let [key (-> message keys first)]
+    ((key handlers) (key message))))
+
 (go
   (let [{:keys [ws-channel error]} (<! (ws-ch "ws://localhost:8080/ws"))]
     (if error
@@ -38,10 +48,9 @@
             (>! ws-channel msg)
             (recur)))
         (go-loop []
-          (when-let [message (<! ws-channel)]
-            (do
-              (js/console.log (str "Got this from server: " message))
-              (swap! tasks update-tasks (:message message)))
+          (when-let [{message :message} (<! ws-channel)]
+            (js/console.log (str "Received message from server:" message))
+            (route-message message)
             (recur)))))))
 
 (defn guid [t]
