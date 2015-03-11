@@ -9,25 +9,35 @@
   (:gen-class))
 
 (def tasks (atom {:resolved []
-                  :pending []}))
+                  :pending []
+                  :processing []}))
 (def downch (chan))
 
-(defn ws-handler [{:keys [ws-channel] :as req}]
+(defn handle-incoming [ws-channel]
   (go-loop []
     (when-let [{:keys [message error] :as msg} (<! ws-channel)]
       (if error
         (format "Error: '%s'." (pr-str msg))
-        (diego/create-task message)
-        )
-      (recur)))
+        (do
+          (diego/create-task message)
+          (>! ws-channel {:tasks (swap! tasks assoc :processing (diego/remote-tasks))})))
+      (recur))))
+
+(defn handle-outgoing [ws-channel]
   (go-loop []
     (when-let [msg (<! downch)]
       (>! ws-channel msg)
       (recur))))
 
+(defn ws-handler [{:keys [ws-channel] :as req}]
+  (handle-incoming ws-channel)
+  (handle-outgoing ws-channel))
+
 (defroutes app
   (GET "/" [] (resource-response "index.html" {:root "public"}))
-  (GET "/ws" [] (-> ws-handler (wrap-websocket-handler)))
+  (GET "/ws" [] (-> ws-handler (wrap-websocket-handler
+                                {:read-ch (chan nil)
+                                 :write-ch (chan nil)})))
   (POST "/taskfinished" {body :body}
         (let [parsed-task (diego/parse-task (slurp body))]
           (put! downch

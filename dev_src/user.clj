@@ -15,6 +15,7 @@
   (refresh)
   (clear)
   (reload)
+  (count (diego/remote-tasks))
   (count (:resolved @server/tasks))
   (first (:resolved @server/tasks))
 
@@ -23,5 +24,4 @@
                     {:failed failed
                      :successful successful})))
 
-  (count (diego/remote-tasks))
   )

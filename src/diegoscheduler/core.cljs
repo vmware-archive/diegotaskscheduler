@@ -13,7 +13,7 @@
                          :docker-image "docker://camelpunch/s3copier"
                          :path "/usr/local/bundle/bin/bundle"
                          :args "exec ./copy.rb mysource mydest"}))
-(defonce tasks (atom {:with-diego []
+(defonce tasks (atom {:processing []
                       :successful []
                       :failed []}))
 (def upch (chan))
@@ -26,7 +26,8 @@
         {failed true successful false} (group-by failed? resolved)]
     (assoc m
       :failed failed
-      :successful successful)))
+      :successful successful
+      :processing (:processing new-tasks))))
 
 (defn handle-tasks [new-tasks]
   (swap! tasks update-tasks new-tasks))
@@ -34,9 +35,14 @@
 (def handlers
   {:tasks handle-tasks})
 
+(defn no-handler [message]
+  (js/console.log (str "No handler defined for message: " message)))
+
 (defn route-message [message]
   (let [key (-> message keys first)]
-    ((key handlers) (key message))))
+    (if (contains? handlers key)
+      ((key handlers) (key message))
+      (no-handler message))))
 
 (go
   (let [{:keys [ws-channel error]} (<! (ws-ch "ws://localhost:8080/ws"))]
@@ -48,9 +54,11 @@
             (>! ws-channel msg)
             (recur)))
         (go-loop []
-          (when-let [{message :message} (<! ws-channel)]
-            (js/console.log (str "Received message from server:" message))
-            (route-message message)
+          (when-let [{message :message
+                      error :error} (<! ws-channel)]
+            (if error
+              (js/console.log (str "ERROR: " error))
+              (route-message message))
             (recur)))))))
 
 (defn guid [t]
@@ -95,6 +103,23 @@
     [:button#add-task {:name (str "task" (:id @new-task))
                        :on-click upload-task} "Add " (guid @new-task)]]
    [:p (str @new-task)]
+   [:div
+    [:h2 "Processing Tasks"]
+    [:table
+     [:thead
+      [:tr
+       [:th "GUID"]
+       [:th "State"]
+       [:th "Cell"]
+       [:th "Docker image"]
+       [:th "Time"]]]
+     [:tbody
+      (for [t (:processing @tasks)]
+        ^{:key t} [:tr [:td (:task_guid t)]
+         [:td (:state t)]
+         [:td (:cell_id t)]
+         [:td (:rootfs t)]
+         [:td (.toTimeString (js/Date. (/ (:created_at t) 1000000)))]])]]]
    [:div
     [:h2 "Successful Tasks"]
     [:table

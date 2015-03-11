@@ -12,7 +12,10 @@
   (client/post (str api-url path) {:body body :as :json}))
 (defn add-task [opts] (POST "/tasks" (client/json-encode opts)))
 
-(defn remote-tasks [] (:body (GET "/tasks")))
+(defn parse-task [raw-task]
+  (clojure.walk/keywordize-keys (client/json-decode raw-task)))
+
+(defn remote-tasks [] (map clojure.walk/keywordize-keys (:body (GET "/tasks"))))
 
 (defn create-task [{:keys [id guid domain docker-image path args] :as message}]
   (try+
@@ -29,9 +32,6 @@
               :memory_mb 1000})
    (catch [:status 400] {:keys [body]}
      body)))
-
-(defn parse-task [raw-task]
-  (clojure.walk/keywordize-keys (client/json-decode raw-task)))
 
 ;;   (:require [clojure.tools.namespace.repl :refer [refresh clear]]
 ;;             [clojure.pprint :refer [pprint]]
