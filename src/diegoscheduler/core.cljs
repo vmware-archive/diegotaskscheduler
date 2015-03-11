@@ -9,7 +9,7 @@
 
 (defonce new-task (atom {:id 1
                          :guid "task1"
-                         :domain "foo"
+                         :domain (str "domain-" (js/Math.random))
                          :docker-image "docker://camelpunch/s3copier"
                          :path "/usr/local/bundle/bin/bundle"
                          :args "exec ./copy.rb mysource mydest"}))
