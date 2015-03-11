@@ -33,6 +33,13 @@
   (handle-incoming ws-channel)
   (handle-outgoing ws-channel))
 
+(defn remove-task [coll task]
+  (remove #(= (:task_guid task) (:task_guid %)) coll))
+
+(defn resolve-task [m task]
+  (let [resolved (update-in m [:resolved] conj task)]
+    (update-in resolved [:processing] remove-task task)))
+
 (defroutes app
   (GET "/" [] (resource-response "index.html" {:root "public"}))
   (GET "/ws" [] (-> ws-handler (wrap-websocket-handler
@@ -41,7 +48,7 @@
   (POST "/taskfinished" {body :body}
         (let [parsed-task (diego/parse-task (slurp body))]
           (put! downch
-                {:tasks (swap! tasks update-in [:resolved] conj parsed-task)})
+                {:tasks (swap! tasks resolve-task parsed-task)})
           {:status 200}))
   (route/resources "/")
   (route/not-found "<h1>Page not found</h1>"))
