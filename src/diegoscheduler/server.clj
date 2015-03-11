@@ -10,7 +10,7 @@
 
 (def tasks (atom {:resolved []
                   :pending []}))
-(defonce downch (chan))
+(def downch (chan))
 
 (defn ws-handler [{:keys [ws-channel] :as req}]
   (go-loop []

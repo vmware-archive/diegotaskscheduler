@@ -18,6 +18,16 @@
                       :failed []}))
 (def upch (chan))
 
+(defn failed? [task]
+  (not= "" (:failure_reason task)))
+
+(defn update-tasks [m new-tasks]
+  (let [resolved (:resolved new-tasks)
+        {failed true successful false} (group-by failed? resolved)]
+    (assoc m
+      :failed failed
+      :successful successful)))
+
 (go
   (let [{:keys [ws-channel error]} (<! (ws-ch "ws://localhost:8080/ws"))]
     (if error
@@ -29,7 +39,9 @@
             (recur)))
         (go-loop []
           (when-let [message (<! ws-channel)]
-            (js/console.log (str "Got this from server: " message))
+            (do
+              (js/console.log (str "Got this from server: " message))
+              (swap! tasks update-tasks (:message message)))
             (recur)))))))
 
 (defn guid [t]
@@ -75,13 +87,41 @@
                        :on-click upload-task} "Add " (guid @new-task)]]
    [:p (str @new-task)]
    [:div
-    [:h2 "With Diego"]
-    [:ul
-]]
+    [:h2 "Successful Tasks"]
+    [:table
+     [:thead
+      [:tr
+       [:th "GUID"]
+       [:th "State"]
+       [:th "Cell"]
+       [:th "Docker image"]
+       [:th "Time"]]]
+     [:tbody
+      (for [t (:successful @tasks)]
+        [:tr [:td (:task_guid t)]
+         [:td (:state t)]
+         [:td (:cell_id t)]
+         [:td (:rootfs t)]
+         [:td (.toTimeString (js/Date. (/ (:created_at t) 1000000)))]])]]]
    [:div
-    [:h2 "Successful Tasks"]]
-   [:div
-    [:h2 "Failed Tasks"]]])
+    [:h2 "Failed Tasks"]
+    [:table
+     [:thead
+      [:tr
+       [:th "GUID"]
+       [:th "State"]
+       [:th "Cell"]
+       [:th "Docker image"]
+       [:th "Failure reason"]
+       [:th "Time"]]]
+     [:tbody
+      (for [t (:failed @tasks)]
+        [:tr [:td (:task_guid t)]
+         [:td (:state t)]
+         [:td (:cell_id t)]
+         [:td (:rootfs t)]
+         [:td (:failure_reason t)]
+         [:td (.toTimeString (js/Date. (/ (:created_at t) 1000000)))]])]]]])
 
 (reagent/render-component [page]
                           (. js/document (getElementById "app")))
