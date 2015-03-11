@@ -107,7 +107,7 @@
        [:th "Time"]]]
      [:tbody
       (for [t (:successful @tasks)]
-        [:tr [:td (:task_guid t)]
+        ^{:key t} [:tr [:td (:task_guid t)]
          [:td (:state t)]
          [:td (:cell_id t)]
          [:td (:rootfs t)]
@@ -125,7 +125,7 @@
        [:th "Time"]]]
      [:tbody
       (for [t (:failed @tasks)]
-        [:tr [:td (:task_guid t)]
+        ^{:key t} [:tr [:td (:task_guid t)]
          [:td (:state t)]
          [:td (:cell_id t)]
          [:td (:rootfs t)]
