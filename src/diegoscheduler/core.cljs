@@ -18,6 +18,8 @@
                       :failed []}))
 (def upch (chan))
 
+(def num-visible-tasks 7)
+
 (defn failed? [task]
   (not= "" (:failure_reason task)))
 
@@ -85,6 +87,21 @@
               :value (key (deref a))
               :on-change (event-update a key)}]]))
 
+(defn table [keyfn coll fields]
+  [:table
+     [:thead
+      [:tr
+       (for [heading (vals fields)]
+         [:th {:key (str keyfn heading)} heading])]]
+     [:tbody
+      (for [t (take num-visible-tasks
+                    (sort-by :created_at > (keyfn coll)))]
+        [:tr {:key (str keyfn t)}
+         (for [k (keys fields)]
+           (if (= :created_at k)
+             [:td {:key (str keyfn k)} (.toTimeString (js/Date. (/ (:created_at t) 1000000)))]
+             [:td {:key (str keyfn k)} (k t)]))])]])
+
 (defn page []
   [:div
    [:h1 "Task Scheduler"]
@@ -105,65 +122,27 @@
    [:p (str @new-task)]
    [:div
     [:h2 "Processing Tasks"]
-    [:table
-     [:thead
-      [:tr
-       [:th "GUID"]
-       [:th "State"]
-       [:th "Cell"]
-       [:th "Docker image"]
-       [:th "Time"]]]
-     [:tbody
-      (for [t (sort-by :created_at > (:processing @tasks))]
-        ^{:key t}
-        [:tr
-         [:td (:task_guid t)]
-         [:td (:state t)]
-         [:td (:cell_id t)]
-         [:td (:rootfs t)]
-         [:td (.toTimeString (js/Date. (/ (:created_at t) 1000000)))]])]]]
+    (table :processing @tasks {:task_guid "GUID"
+                               :state "State"
+                               :cell_id "Cell"
+                               :rootfs "Docker image"
+                               :created_at "Time"})]
    [:div
     [:h2 "Successful Tasks"]
-    [:table
-     [:thead
-      [:tr
-       [:th "GUID"]
-       [:th "State"]
-       [:th "Cell"]
-       [:th "Docker image"]
-       [:th "Time"]]]
-     [:tbody
-      (for [t (sort-by :created_at > (:successful @tasks))]
-        ^{:key t}
-        [:tr
-         [:td (:task_guid t)]
-         [:td (:state t)]
-         [:td (:cell_id t)]
-         [:td (:rootfs t)]
-         [:td (.toTimeString (js/Date. (/ (:created_at t) 1000000)))]])]]]
+    (table :successful @tasks {:task_guid "GUID"
+                               :state "State"
+                               :cell_id "Cell"
+                               :rootfs "Docker image"
+                               :created_at "Time"})]
    [:div
     [:h2 "Failed Tasks"]
-    [:table
-     [:thead
-      [:tr
-       [:th "GUID"]
-       [:th "Domain"]
-       [:th "State"]
-       [:th "Cell"]
-       [:th "Docker image"]
-       [:th "Failure reason"]
-       [:th "Time"]]]
-     [:tbody
-      (for [t (sort-by :created_at > (:failed @tasks))]
-        ^{:key t}
-        [:tr
-         [:td (:task_guid t)]
-         [:td (:domain t)]
-         [:td (:state t)]
-         [:td (:cell_id t)]
-         [:td (:rootfs t)]
-         [:td (:failure_reason t)]
-         [:td (.toTimeString (js/Date. (/ (:created_at t) 1000000)))]])]]]])
+    (table :failed @tasks {:task_guid "GUID"
+                           :domain "Domain"
+                           :state "State"
+                           :cell_id "Cell"
+                           :rootfs "Docker image"
+                           :failure_reason "Failure reason"
+                           :created_at "Time"})]])
 
 (reagent/render-component [page]
                           (. js/document (getElementById "app")))
