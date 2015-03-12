@@ -17,7 +17,7 @@
   (go-loop []
     (when-let [{:keys [message error] :as msg} (<! ws-channel)]
       (if error
-        (format "Error: '%s'." (pr-str msg))
+        (>! ws-channel {:error msg})
         (do
           (diego/create-task message)
           (>! ws-channel {:tasks (swap! tasks assoc :processing (diego/remote-tasks))})))
