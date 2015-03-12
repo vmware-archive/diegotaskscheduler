@@ -114,8 +114,10 @@
        [:th "Docker image"]
        [:th "Time"]]]
      [:tbody
-      (for [t (:processing @tasks)]
-        ^{:key t} [:tr [:td (:task_guid t)]
+      (for [t (sort-by :created_at > (:processing @tasks))]
+        ^{:key t}
+        [:tr
+         [:td (:task_guid t)]
          [:td (:state t)]
          [:td (:cell_id t)]
          [:td (:rootfs t)]
@@ -131,8 +133,10 @@
        [:th "Docker image"]
        [:th "Time"]]]
      [:tbody
-      (for [t (:successful @tasks)]
-        ^{:key t} [:tr [:td (:task_guid t)]
+      (for [t (sort-by :created_at > (:successful @tasks))]
+        ^{:key t}
+        [:tr
+         [:td (:task_guid t)]
          [:td (:state t)]
          [:td (:cell_id t)]
          [:td (:rootfs t)]
@@ -143,14 +147,18 @@
      [:thead
       [:tr
        [:th "GUID"]
+       [:th "Domain"]
        [:th "State"]
        [:th "Cell"]
        [:th "Docker image"]
        [:th "Failure reason"]
        [:th "Time"]]]
      [:tbody
-      (for [t (:failed @tasks)]
-        ^{:key t} [:tr [:td (:task_guid t)]
+      (for [t (sort-by :created_at > (:failed @tasks))]
+        ^{:key t}
+        [:tr
+         [:td (:task_guid t)]
+         [:td (:domain t)]
          [:td (:state t)]
          [:td (:cell_id t)]
          [:td (:rootfs t)]
