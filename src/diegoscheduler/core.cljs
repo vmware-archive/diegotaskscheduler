@@ -7,12 +7,12 @@
 
 (enable-console-print!)
 
-(defonce new-task (atom {:id 1
-                         :guid "task1"
-                         :domain (str "domain-" (js/Math.random))
-                         :docker-image "docker://camelpunch/s3copier"
-                         :path "/usr/local/bundle/bin/bundle"
-                         :args "exec ./copy.rb mysource mydest"}))
+(def new-task (atom {:id 1
+                     :guid "task1"
+                     :domain (str "domain-" (js/Math.random))
+                     :docker-image "docker:///camelpunch/s3copier"
+                     :path "/usr/local/bundle/bin/bundle"
+                     :args "exec ./copy.rb mysource mydest"}))
 (defonce tasks (atom {:processing []
                       :successful []
                       :failed []}))
@@ -46,22 +46,28 @@
       ((key handlers) (key message))
       (no-handler message))))
 
+(defn handle-outgoing [ws-channel]
+  (go-loop []
+    (when-let [msg (<! upch)]
+      (>! ws-channel msg)
+      (recur))))
+
+(defn handle-incoming [ws-channel]
+  (go-loop []
+    (when-let [{message :message
+                error :error} (<! ws-channel)]
+      (if error
+        (js/console.log (str "ERROR: " error))
+        (route-message message))
+      (recur))))
+
 (go
   (let [{:keys [ws-channel error]} (<! (ws-ch "ws://localhost:8080/ws"))]
     (if error
       (js/console.log "Error:" (pr-str error))
       (do
-        (go-loop []
-          (when-let [msg (<! upch)]
-            (>! ws-channel msg)
-            (recur)))
-        (go-loop []
-          (when-let [{message :message
-                      error :error} (<! ws-channel)]
-            (if error
-              (js/console.log (str "ERROR: " error))
-              (route-message message))
-            (recur)))))))
+        (handle-outgoing ws-channel)
+        (handle-incoming ws-channel)))))
 
 (defn guid [t]
   (str "task" (:id t)))
@@ -116,13 +122,14 @@
     (input new-task :domain "Domain")
     (input new-task :docker-image "Docker image")
     (input new-task :path "Path to executable")
-    (input new-task :args "Arguments (space sep)")
+    (input new-task :args "Arguments")
     [:button#add-task {:name (str "task" (:id @new-task))
                        :on-click upload-task} "Add " (guid @new-task)]]
    [:p (str @new-task)]
    [:div
     [:h2 "Processing Tasks"]
     (table :processing @tasks {:task_guid "GUID"
+                               :domain "Domain"
                                :state "State"
                                :cell_id "Cell"
                                :rootfs "Docker image"

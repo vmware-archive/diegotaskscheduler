@@ -19,8 +19,9 @@
       (if error
         (>! ws-channel {:error msg})
         (do
-          (diego/create-task message)
-          (>! ws-channel {:tasks (swap! tasks assoc :processing (diego/remote-tasks))})))
+          (let [result (diego/create-task message)]
+            (>! ws-channel result)
+            (>! ws-channel {:tasks (swap! tasks assoc :processing (diego/remote-tasks))}))))
       (recur))))
 
 (defn handle-outgoing [ws-channel]
@@ -37,8 +38,9 @@
   (remove #(= (:task_guid task) (:task_guid %)) coll))
 
 (defn resolve-task [m task]
-  (let [resolved (update-in m [:resolved] conj task)]
-    (update-in resolved [:processing] remove-task task)))
+  (-> m
+      (update-in [:resolved] conj task)
+      (update-in [:processing] remove-task task)))
 
 (defroutes app
   (GET "/" [] (resource-response "index.html" {:root "public"}))
