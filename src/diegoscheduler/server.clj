@@ -19,9 +19,8 @@
       (if error
         (>! ws-channel {:error msg})
         (do
-          (let [result (diego/create-task message)]
-            (>! ws-channel result)
-            (>! ws-channel {:tasks (swap! tasks assoc :processing (diego/remote-tasks))}))))
+          (diego/create-task message)
+          (>! ws-channel {:tasks (swap! tasks assoc :processing (diego/remote-tasks))})))
       (recur))))
 
 (defn handle-outgoing [ws-channel]

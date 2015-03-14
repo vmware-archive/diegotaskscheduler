@@ -17,18 +17,34 @@
 
 (defn remote-tasks [] (map clojure.walk/keywordize-keys (:body (GET "/tasks"))))
 
-(defn create-task [{:keys [id guid domain docker-image path args] :as message}]
+(defn format-env [s]
+  (->> (or s "")
+       (re-seq #"(\S+)=(\S+)")
+       (map rest)
+       (map (partial interleave [:name :value]))
+       (map (partial apply array-map))))
+
+(comment
+  (format-env "a=b c=d e=f")
+  (format-env nil)
+  )
+
+(defn create-task [{:keys [args id guid domain docker-image env path result-file] :as message}]
   (try+
-   (add-task {:domain domain
-              :task_guid guid
-              :log_guid guid
-              :stack "lucid64"
-              :privileged false
-              :rootfs docker-image
-              :action {:run {:path path
-                             :args (clojure.string/split args #" ")}}
-              :completion_callback_url completion-callback-url
-              :disk_mb 1000
-              :memory_mb 1000})
+   (let [task {:domain domain
+               :task_guid guid
+               :log_guid guid
+               :stack "lucid64"
+               :privileged false
+               :rootfs docker-image
+               :action {:run {:path path
+                              :args (clojure.string/split args #" ")}}
+               :completion_callback_url completion-callback-url
+               :env (format-env env)
+               :result_file result-file
+               :disk_mb 1000
+               :memory_mb 1000}]
+     (println (client/json-encode task))
+     (add-task task))
    (catch [:status 400] {:keys [body]}
      body)))

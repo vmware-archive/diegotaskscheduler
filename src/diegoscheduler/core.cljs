@@ -10,9 +10,11 @@
 (def new-task (atom {:id 1
                      :guid "task1"
                      :domain (str "domain-" (js/Math.random))
-                     :docker-image "docker:///camelpunch/s3copier"
-                     :path "/usr/local/bundle/bin/bundle"
-                     :args "exec ./copy.rb mysource mydest"}))
+                     :docker-image "docker:///camelpunch/env_writer"
+                     :path "/usr/local/bin/env_writer.sh"
+                     :args "key1 /tmp/result_file"
+                     :result-file "/tmp/result_file"
+                     :env "key1=val1 key2=val2"}))
 (defonce tasks (atom {:processing []
                       :successful []
                       :failed []}))
@@ -34,8 +36,12 @@
 (defn handle-tasks [new-tasks]
   (swap! tasks update-tasks new-tasks))
 
+(defn log-handler [preamble content]
+  (js/console.log preamble (clj->js content)))
+
 (def handlers
-  {:tasks handle-tasks})
+  {:tasks handle-tasks
+   :diego-response (partial log-handler "Response:")})
 
 (defn no-handler [message]
   (js/console.log (str "No handler defined for message: " message)))
@@ -117,12 +123,14 @@
      [:label {:for "task_guid"} "GUID"]
      [:input#task-guid {:name "task_guid"
                         :disabled "disabled"
-                        :size 9
+                        :size 9,
                         :value (guid @new-task)}]]
     (input new-task :domain "Domain")
     (input new-task :docker-image "Docker image")
     (input new-task :path "Path to executable")
     (input new-task :args "Arguments")
+    (input new-task :env "ENV")
+    (input new-task :result-file "Result file")
     [:button#add-task {:name (str "task" (:id @new-task))
                        :on-click upload-task} "Add " (guid @new-task)]]
    [:p (str @new-task)]
@@ -140,7 +148,8 @@
                                :state "State"
                                :cell_id "Cell"
                                :rootfs "Docker image"
-                               :created_at "Time"})]
+                               :created_at "Time"
+                               :result "Result"})]
    [:div
     [:h2 "Failed Tasks"]
     (table :failed @tasks {:task_guid "GUID"
