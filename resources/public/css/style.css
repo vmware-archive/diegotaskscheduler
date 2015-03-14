@@ -34,6 +34,9 @@ body {
     float: left;
     width: 33%;
 }
+.section.numtasks0 {
+    visibility: hidden
+}
 .section-ctr {
     border: 1px solid;
     padding: 10px;
@@ -61,6 +64,5 @@ body {
     white-space: nowrap;
 }
 .tbldv {
-    white-space: nowrap;
     padding-right: 10px;
 }

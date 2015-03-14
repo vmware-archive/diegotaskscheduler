@@ -137,19 +137,22 @@
      (input new-task :result-file "Result file")
      [:button.btn {:name (str "task" (:id @new-task))
                    :on-click upload-task} "Add " (guid @new-task)]]]
-   [:div.section.processing
+   [:div
+    {:class (str "section processing numtasks" (count (:processing @tasks)))}
     [:div.section-ctr
      [:h2.sub-heading "Processing"]
      (table :processing @tasks {:task_guid "GUID"
                                 :state "State"
                                 :rootfs "Docker image"})]]
-   [:div.section.successful
+   [:div
+    {:class (str "section successful numtasks" (count (:successful @tasks)))}
     [:div.section-ctr
      [:h2.sub-heading "Successful"]
      (table :successful @tasks {:task_guid "GUID"
                                 :rootfs "Docker image"
                                 :result "Result"})]]
-   [:div.section.failed
+   [:div
+    {:class (str "section failed numtasks" (count (:failed @tasks)))}
     [:div.section-ctr
      [:h2.sub-heading "Failed"]
      (table :failed @tasks {:task_guid "GUID"
