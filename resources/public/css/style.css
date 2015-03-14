@@ -1,2 +1,66 @@
-/* some style */
-
+body {
+    font-family: "Helvetica Neue";
+    font-weight: 200;
+    font-size: 13px;
+}
+.container {
+    margin: 0 auto;
+    padding: 10px;
+}
+.heading {
+    font-size: 24px;
+    padding-bottom: 10px;
+}
+.sub-heading {
+    font-size: 18px;
+    padding-bottom: 10px;
+    font-weight: 400;
+}
+.form-control {
+    padding-bottom: 10px;
+    float: left;
+}
+.form-control .lbl {
+    display: block;
+    margin-left: 3px;
+}
+.btn {
+    height: 4em;
+    width: 10em;
+    float: right;
+}
+.section {
+    clear: right;
+    float: left;
+    width: 33%;
+}
+.section-ctr {
+    border: 1px solid;
+    padding: 10px;
+    margin: 10px;
+    font-size: 10px;
+    overflow: hidden;
+}
+.section.processing .section-ctr {
+    border-color: orange;
+}
+.section.successful .section-ctr {
+    border-color: #0c0;
+}
+.section.failed .section-ctr {
+    border-color: red;
+}
+.tblctr {
+    width: 90%;
+    overflow: hidden;
+}
+.tblhd {
+    text-align: left;
+    font-weight: 400;
+    padding-right: 10px;
+    white-space: nowrap;
+}
+.tbldv {
+    white-space: nowrap;
+    padding-right: 10px;
+}

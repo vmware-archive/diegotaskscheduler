@@ -22,12 +22,9 @@
 
 (def num-visible-tasks 7)
 
-(defn failed? [task]
-  (not= "" (:failure_reason task)))
-
 (defn update-tasks [m new-tasks]
   (let [resolved (:resolved new-tasks)
-        {failed true successful false} (group-by failed? resolved)]
+        {failed true successful false} (group-by :failed resolved)]
     (assoc m
       :failed failed
       :successful successful
@@ -92,73 +89,72 @@
 
 (defn input [a key label]
   (let [id (str "task-" key)]
-    [:p
-     [:label {:for id} label]
-     [:input {:id id
-              :size 30
-              :value (key (deref a))
-              :on-change (event-update a key)}]]))
+    [:p.form-control
+     [:label.lbl {:for id} label]
+     [:input.inpt {:id id
+                   :size 30
+                   :value (key (deref a))
+                   :on-change (event-update a key)}]]))
+
+(defn table-division [keyfn k t]
+  [:td.tbldv {:key (str keyfn k)}
+   (case k
+     :created_at (.toTimeString (js/Date. (/ (:created_at t) 1000000)))
+     :rootfs (last (clojure.string/split (k t) #"/"))
+     (k t))])
 
 (defn table [keyfn coll fields]
-  [:table
-     [:thead
-      [:tr
-       (for [heading (vals fields)]
-         [:th {:key (str keyfn heading)} heading])]]
-     [:tbody
-      (for [t (take num-visible-tasks
-                    (sort-by :created_at > (keyfn coll)))]
-        [:tr {:key (str keyfn t)}
-         (for [k (keys fields)]
-           (if (= :created_at k)
-             [:td {:key (str keyfn k)} (.toTimeString (js/Date. (/ (:created_at t) 1000000)))]
-             [:td {:key (str keyfn k)} (k t)]))])]])
+  [:div.tblctr
+   [:table
+    [:thead
+     [:tr
+      (for [heading (vals fields)]
+        [:th.tblhd {:key (str keyfn heading)} heading])]]
+    [:tbody
+     (for [t (take num-visible-tasks
+                   (sort-by :created_at > (keyfn coll)))]
+       [:tr {:key (str keyfn t)}
+        (for [k (keys fields)]
+          (table-division keyfn k t))])]]])
 
 (defn page []
-  [:div
-   [:h1 "Task Scheduler"]
-   [:div
-    [:h2 "Controls"]
-    [:p
-     [:label {:for "task_guid"} "GUID"]
-     [:input#task-guid {:name "task_guid"
-                        :disabled "disabled"
-                        :size 9,
-                        :value (guid @new-task)}]]
-    (input new-task :domain "Domain")
-    (input new-task :docker-image "Docker image")
-    (input new-task :path "Path to executable")
-    (input new-task :args "Arguments")
-    (input new-task :env "ENV")
-    (input new-task :result-file "Result file")
-    [:button#add-task {:name (str "task" (:id @new-task))
-                       :on-click upload-task} "Add " (guid @new-task)]]
-   [:p (str @new-task)]
-   [:div
-    [:h2 "Processing Tasks"]
-    (table :processing @tasks {:task_guid "GUID"
-                               :domain "Domain"
-                               :state "State"
-                               :cell_id "Cell"
-                               :rootfs "Docker image"
-                               :created_at "Time"})]
-   [:div
-    [:h2 "Successful Tasks"]
-    (table :successful @tasks {:task_guid "GUID"
-                               :state "State"
-                               :cell_id "Cell"
-                               :rootfs "Docker image"
-                               :created_at "Time"
-                               :result "Result"})]
-   [:div
-    [:h2 "Failed Tasks"]
-    (table :failed @tasks {:task_guid "GUID"
-                           :domain "Domain"
-                           :state "State"
-                           :cell_id "Cell"
-                           :rootfs "Docker image"
-                           :failure_reason "Failure reason"
-                           :created_at "Time"})]])
+  [:div.container
+   [:h1.heading "Task Scheduler"]
+   [:div.fw-section
+    [:div.section-ctr
+     [:h2.sub-heading "Controls"]
+     [:p.form-control
+      [:label.lbl {:for "task_guid"} "GUID"]
+      [:input#task-guid.inpt {:name "task_guid"
+                              :disabled "disabled"
+                              :size 9,
+                              :value (guid @new-task)}]]
+     (input new-task :domain "Domain")
+     (input new-task :docker-image "Docker image")
+     (input new-task :path "Path to executable")
+     (input new-task :args "Arguments")
+     (input new-task :env "ENV")
+     (input new-task :result-file "Result file")
+     [:button.btn {:name (str "task" (:id @new-task))
+                   :on-click upload-task} "Add " (guid @new-task)]]]
+   [:div.section.processing
+    [:div.section-ctr
+     [:h2.sub-heading "Processing"]
+     (table :processing @tasks {:task_guid "GUID"
+                                :state "State"
+                                :rootfs "Docker image"})]]
+   [:div.section.successful
+    [:div.section-ctr
+     [:h2.sub-heading "Successful"]
+     (table :successful @tasks {:task_guid "GUID"
+                                :rootfs "Docker image"
+                                :result "Result"})]]
+   [:div.section.failed
+    [:div.section-ctr
+     [:h2.sub-heading "Failed"]
+     (table :failed @tasks {:task_guid "GUID"
+                            :rootfs "Docker image"
+                            :failure_reason "Failure reason"})]]])
 
 (reagent/render-component [page]
                           (. js/document (getElementById "app")))
