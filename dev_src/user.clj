@@ -43,7 +43,6 @@
   (remove #(:failed %) (sorted-resolved))
   (first (:resolved @server/tasks))
   (reset! server/tasks {:resolved []
-                        :pending []
                         :processing []})
 
   (count (:failed (let [resolved (:resolved @server/tasks)

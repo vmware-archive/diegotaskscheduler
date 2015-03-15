@@ -9,7 +9,6 @@
   (:gen-class))
 
 (def tasks (atom {:resolved []
-                  :pending []
                   :processing []}))
 (def downch (chan))
 
