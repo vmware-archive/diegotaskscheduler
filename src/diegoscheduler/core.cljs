@@ -9,7 +9,9 @@
 
 (def new-task (atom {:id 1
                      :guid "task1"
-                     :domain (str "domain-" (js/Math.random))
+                     :domain (-> (js/Math.random)
+                                 (.toString 36)
+                                 (.slice 2))
                      :docker-image "docker:///camelpunch/env_writer"
                      :path "/usr/local/bin/env_writer.sh"
                      :args "key1 /tmp/result_file"
@@ -98,11 +100,15 @@
                    :on-change (event-update a key)}]]))
 
 (defn table-division [keyfn k t]
-  [:td.tbldv {:key (str keyfn k)}
-   (case k
-     :created_at (.toTimeString (js/Date. (/ (:created_at t) 1000000)))
-     :rootfs (last (clojure.string/split (k t) #"/"))
-     (k t))])
+  (let [short-cmd (clojure.string/join " "
+                                       (flatten [(clojure.string/split #"/" (get-in t [:action :run :path]))
+                                                 (get-in t [:action :run :args])]))]
+    [:td.tbldv {:key (str keyfn k)}
+     (case k
+       :created_at (.toTimeString (js/Date. (/ (:created_at t) 1000000)))
+       :rootfs (last (clojure.string/split (k t) #"/"))
+       :cmd short-cmd
+       (k t))]))
 
 (defn table [keyfn coll fields]
   [:div.tblctr
@@ -145,15 +151,20 @@
      [:button.btn {:name (str "task" (:id @new-task))
                    :on-click upload-task} "Add " (guid @new-task)]]]
    (section :pending "Pending" {:task_guid "GUID"
+                                :domain "Domain"
                                 :rootfs "Docker image"})
    (section :running "Running" {:task_guid "GUID"
+                                :domain "Domain"
                                 :rootfs "Docker image"})
    (section :successful "Successful" {:task_guid "GUID"
+                                      :domain "Domain"
                                       :rootfs "Docker image"
                                       :result "Result"})
    (section :failed "Failed" {:task_guid "GUID"
+                              :domain "Domain"
                               :rootfs "Docker image"
-                              :failure_reason "Failure reason"})])
+                              :failure_reason "Failure reason"
+                              :cmd "Command"})])
 
 (reagent/render-component [page]
                           (. js/document (getElementById "app")))
