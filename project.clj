@@ -9,6 +9,7 @@
                  [clj-http "1.0.1"]
                  [compojure "1.3.2"]
                  [jarohen/chord "0.6.0"]
+                 [overtone/at-at "1.2.0"]
                  [org.clojure/clojurescript "0.0-2850"]
                  [figwheel "0.2.5-SNAPSHOT"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]

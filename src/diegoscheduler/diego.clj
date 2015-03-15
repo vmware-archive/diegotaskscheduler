@@ -44,7 +44,7 @@
                :result_file result-file
                :disk_mb 1000
                :memory_mb 1000}]
-     (println (client/json-encode task))
-     (add-task task))
+     (add-task task)
+     task)
    (catch [:status 400] {:keys [body]}
-     body)))
+     {})))

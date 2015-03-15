@@ -114,6 +114,13 @@
         (for [k (keys fields)]
           (table-division keyfn k t))])]]])
 
+(defn section [k title task-attrs]
+  [:div
+   {:class (str "section " (name k) " numtasks" (count (k @tasks)))}
+   [:div.section-ctr
+    [:h2.sub-heading title]
+    (table k @tasks task-attrs)]])
+
 (defn page []
   [:div.container
    [:h1.heading "Task Scheduler"]
@@ -134,27 +141,15 @@
      (input new-task :result-file "Result file")
      [:button.btn {:name (str "task" (:id @new-task))
                    :on-click upload-task} "Add " (guid @new-task)]]]
-   [:div
-    {:class (str "section processing numtasks" (count (:processing @tasks)))}
-    [:div.section-ctr
-     [:h2.sub-heading "Processing"]
-     (table :processing @tasks {:task_guid "GUID"
-                                :state "State"
-                                :rootfs "Docker image"})]]
-   [:div
-    {:class (str "section successful numtasks" (count (:successful @tasks)))}
-    [:div.section-ctr
-     [:h2.sub-heading "Successful"]
-     (table :successful @tasks {:task_guid "GUID"
-                                :rootfs "Docker image"
-                                :result "Result"})]]
-   [:div
-    {:class (str "section failed numtasks" (count (:failed @tasks)))}
-    [:div.section-ctr
-     [:h2.sub-heading "Failed"]
-     (table :failed @tasks {:task_guid "GUID"
-                            :rootfs "Docker image"
-                            :failure_reason "Failure reason"})]]])
+   (section :processing "Processing" {:task_guid "GUID"
+                                      :state "State"
+                                      :rootfs "Docker image"})
+   (section :successful "Successful" {:task_guid "GUID"
+                                      :rootfs "Docker image"
+                                      :result "Result"})
+   (section :failed "Failed" {:task_guid "GUID"
+                              :rootfs "Docker image"
+                              :failure_reason "Failure reason"})])
 
 (reagent/render-component [page]
                           (. js/document (getElementById "app")))

@@ -1,16 +1,20 @@
 (ns diegoscheduler.server
-  (:require [diegoscheduler.diego :as diego]
+  (:require [clojure.core.async :refer [<! >! put! close! go-loop go chan]]
+            [diegoscheduler.diego :as diego]
             [org.httpkit.server :as http-kit]
             [compojure.core :refer :all]
             [compojure.route :as route]
             [ring.util.response :refer [resource-response]]
             [chord.http-kit :refer [wrap-websocket-handler]]
-            [clojure.core.async :refer [<! >! put! close! go-loop go chan]])
+            [overtone.at-at :as atat]
+   )
   (:gen-class))
 
 (def tasks (atom {:resolved []
                   :processing []}))
+(defonce task-updates (atom {}))
 (def downch (chan))
+(defonce sched-pool (atat/mk-pool))
 
 (defn handle-incoming [ws-channel]
   (go-loop []
@@ -18,8 +22,15 @@
       (if error
         (>! ws-channel {:error msg})
         (do
-          (diego/create-task message)
-          (>! ws-channel {:tasks (swap! tasks assoc :processing (diego/remote-tasks))})))
+          (let [task (diego/create-task message)
+                job (atat/every 1000
+                                (fn []
+                                  (let [processing (diego/remote-tasks)]
+                                    (put! ws-channel
+                                          {:tasks (swap! tasks
+                                                         assoc :processing processing)})))
+                                sched-pool)]
+            (swap! task-updates assoc (:task_guid task) job))))
       (recur))))
 
 (defn handle-outgoing [ws-channel]
@@ -49,6 +60,7 @@
         (let [parsed-task (diego/parse-task (slurp body))]
           (put! downch
                 {:tasks (swap! tasks resolve-task parsed-task)})
+          (atat/stop (@task-updates (:task_guid parsed-task)))
           {:status 200}))
   (route/resources "/")
   (route/not-found "<h1>Page not found</h1>"))
