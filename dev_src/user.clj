@@ -2,7 +2,8 @@
   (:require [clojure.tools.namespace.repl :refer [refresh clear]]
             [org.httpkit.server :as http-kit]
             [diegoscheduler.server :as server]
-            [diegoscheduler.diego :as diego]))
+            [diegoscheduler.diego :as diego]
+            [overtone.at-at :as atat]))
 
 (def task-id (atom 1))
 
@@ -19,7 +20,9 @@
 (comment
   (refresh)
   (clear)
+  (stop)
   (reload)
+  (atat/stop-and-reset-pool! server/sched-pool)
   (diego/create-task {:id (swap! task-id inc)
                       :guid (str "foo" @task-id)
                       :domain "mydomainz"
