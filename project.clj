@@ -18,9 +18,10 @@
   :plugins [[lein-cljsbuild "1.0.4"]
             [lein-figwheel "0.2.5-SNAPSHOT"]]
 
-  :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.7"]]
+  :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.8"]]
                    :source-paths ["dev_src"]
-                   :plugins [[cider/cider-nrepl "0.8.1"]]}}
+                   :plugins [[cider/cider-nrepl "0.8.2"]
+                             [com.cemerick/austin "0.1.6"]]}}
 
   :source-paths ["src"]
   :main diegoscheduler.server
