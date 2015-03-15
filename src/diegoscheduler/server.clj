@@ -23,7 +23,7 @@
         (>! ws-channel {:error msg})
         (do
           (let [task (diego/create-task message)
-                job (atat/every 1000
+                job (atat/every 500
                                 (fn []
                                   (let [processing (diego/remote-tasks)]
                                     (put! ws-channel

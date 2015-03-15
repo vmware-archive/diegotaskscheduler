@@ -32,7 +32,8 @@ body {
 .section {
     clear: right;
     float: left;
-    width: 33%;
+    width: 50%;
+    min-height: 100px;
 }
 .section.numtasks0 {
     visibility: hidden
@@ -44,8 +45,11 @@ body {
     font-size: 10px;
     overflow: hidden;
 }
-.section.processing .section-ctr {
+.section.pending .section-ctr {
     border-color: orange;
+}
+.section.running .section-ctr {
+    border-color: blue;
 }
 .section.successful .section-ctr {
     border-color: #0c0;

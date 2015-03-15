@@ -15,7 +15,8 @@
                      :args "key1 /tmp/result_file"
                      :result-file "/tmp/result_file"
                      :env "key1=val1 key2=val2"}))
-(defonce tasks (atom {:processing []
+(defonce tasks (atom {:pending []
+                      :running []
                       :successful []
                       :failed []}))
 (def upch (chan))
@@ -26,7 +27,9 @@
     (assoc m
       :failed failed
       :successful successful
-      :processing (:processing new-tasks))))
+      :pending (filter #(= "PENDING" (:state %)) (:processing new-tasks))
+      :running (filter #(= "RUNNING" (:state %)) (:processing new-tasks))
+      )))
 
 (defn handle-tasks [new-tasks]
   (swap! tasks update-tasks new-tasks))
@@ -114,12 +117,12 @@
         (for [k (keys fields)]
           (table-division keyfn k t))])]]])
 
-(defn section [k title task-attrs]
+(defn section [state title task-attrs]
   [:div
-   {:class (str "section " (name k) " numtasks" (count (k @tasks)))}
+   {:class (str "section " (name state) " numtasks" (count (state @tasks)))}
    [:div.section-ctr
     [:h2.sub-heading title]
-    (table k @tasks task-attrs)]])
+    (table state @tasks task-attrs)]])
 
 (defn page []
   [:div.container
@@ -141,9 +144,10 @@
      (input new-task :result-file "Result file")
      [:button.btn {:name (str "task" (:id @new-task))
                    :on-click upload-task} "Add " (guid @new-task)]]]
-   (section :processing "Processing" {:task_guid "GUID"
-                                      :state "State"
-                                      :rootfs "Docker image"})
+   (section :pending "Pending" {:task_guid "GUID"
+                                :rootfs "Docker image"})
+   (section :running "Running" {:task_guid "GUID"
+                                :rootfs "Docker image"})
    (section :successful "Successful" {:task_guid "GUID"
                                       :rootfs "Docker image"
                                       :result "Result"})
