@@ -20,8 +20,6 @@
                       :failed []}))
 (def upch (chan))
 
-(def num-visible-tasks 7)
-
 (defn update-tasks [m new-tasks]
   (let [resolved (:resolved new-tasks)
         {failed true successful false} (group-by :failed resolved)]
@@ -111,8 +109,7 @@
       (for [heading (vals fields)]
         [:th.tblhd {:key (str keyfn heading)} heading])]]
     [:tbody
-     (for [t (take num-visible-tasks
-                   (sort-by :created_at > (keyfn coll)))]
+     (for [t (sort-by :created_at > (keyfn coll))]
        [:tr {:key (str keyfn t)}
         (for [k (keys fields)]
           (table-division keyfn k t))])]]])
