@@ -9,9 +9,14 @@
   (start [component]
     (let [server (fig/start-server { :css-dirs ["resources/public/css"]})
           config {:builds [{:id "dev"
-                            :output-to "resources/public/checkbuild.js"
-                            :output-dir "resources/public/out"
-                            :optimizations :none}]
+                            :source-paths ["src" "dev_src"]
+                            :compiler {:output-to "resources/public/js/compiled/diegoscheduler.js"
+                                       :output-dir "resources/public/js/compiled/out"
+                                       :optimizations :none
+                                       :asset-path "js/compiled/out"
+                                       :source-map true
+                                       :source-map-timestamp true
+                                       :cache-analysis true }}]
                   :figwheel-server server}
           builder (fig-auto/autobuild* config)]
       (assoc component
