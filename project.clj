@@ -21,6 +21,7 @@
             [lein-figwheel "0.2.5"]]
 
   :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.8"]]
+                   :repl-options {:init-ns user}
                    :source-paths ["dev_src"]
                    :plugins [[cider/cider-nrepl "0.8.2"]
                              [com.cemerick/austin "0.1.6"]]}}
