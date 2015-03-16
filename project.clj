@@ -12,12 +12,13 @@
                  [jarohen/chord "0.6.0"]
                  [overtone/at-at "1.2.0"]
                  [org.clojure/clojurescript "0.0-2850"]
-                 [figwheel "0.2.5-SNAPSHOT"]
+                 [figwheel "0.2.5"]
+                 [figwheel-sidecar "0.2.5"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [reagent "0.5.0-alpha3"]]
 
   :plugins [[lein-cljsbuild "1.0.4"]
-            [lein-figwheel "0.2.5-SNAPSHOT"]]
+            [lein-figwheel "0.2.5"]]
 
   :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.8"]]
                    :source-paths ["dev_src"]
