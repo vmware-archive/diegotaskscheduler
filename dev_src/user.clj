@@ -19,12 +19,9 @@
   (clear)
 
   (go)
+  (:web system)
   (stop)
   (reset)
-
-  (keys system)
-  (:web system)
-  (:figwheel system)
 
   (atat/stop-and-reset-pool! server/sched-pool)
   (diego/create-task {:id (swap! task-id inc)
@@ -35,7 +32,7 @@
                       :args "foo /tmp/result"
                       :env "foo=bar"
                       :result-file "/tmp/result"})
-  (diego/create-task {:id (swap! task-id inc)
+    (diego/create-task {:id (swap! task-id inc)
                       :guid (str "foo" @task-id)
                       :domain "mydomainz"
                       :docker-image "docker:///camelpunch/s3copier"
