@@ -2,7 +2,8 @@
     (:require
      [reagent.core :as reagent :refer [atom]]
      [chord.client :refer [ws-ch]]
-     [cljs.core.async :refer [<! >! put! close! chan]])
+     [cljs.core.async :refer [<! >! put! close! chan]]
+     [clojure.string :refer [join split]])
     (:require-macros [cljs.core.async.macros :refer [go go-loop]]))
 
 (enable-console-print!)
@@ -99,16 +100,18 @@
                    :value (key (deref a))
                    :on-change (event-update a key)}]]))
 
+(defn short-cmd [t]
+  (let [run (get-in t [:action :run])]
+    (join " " (cons (-> (:path run) (split #"/") last)
+                    (:args run)))))
+
 (defn table-division [keyfn k t]
-  (let [short-cmd (clojure.string/join " "
-                                       (flatten [(clojure.string/split #"/" (get-in t [:action :run :path]))
-                                                 (get-in t [:action :run :args])]))]
-    [:td.tbldv {:key (str keyfn k)}
-     (case k
-       :created_at (.toTimeString (js/Date. (/ (:created_at t) 1000000)))
-       :rootfs (last (clojure.string/split (k t) #"/"))
-       :cmd short-cmd
-       (k t))]))
+  [:td.tbldv {:key (str keyfn k)}
+   (case k
+     :created_at (.toTimeString (js/Date. (/ (:created_at t) 1000000)))
+     :rootfs (last (clojure.string/split (k t) #"/"))
+     :cmd (short-cmd t)
+     (k t))])
 
 (defn table [keyfn coll fields]
   [:div.tblctr
