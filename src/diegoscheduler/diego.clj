@@ -29,7 +29,7 @@
   (format-env nil)
   )
 
-(defn create-task [{:keys [args id guid domain docker-image env path result-file] :as message}]
+(defn create-task [{:keys [args id guid dir domain docker-image env path result-file] :as message}]
   (try+
    (let [task {:domain domain
                :task_guid guid
@@ -41,6 +41,7 @@
                               :args (clojure.string/split args #" ")}}
                :completion_callback_url completion-callback-url
                :env (format-env env)
+               :dir dir
                :result_file result-file
                :disk_mb 1000
                :memory_mb 1000}]

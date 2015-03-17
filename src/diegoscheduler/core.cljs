@@ -13,11 +13,12 @@
                      :domain (-> (js/Math.random)
                                  (.toString 36)
                                  (.slice 2))
-                     :docker-image "docker:///camelpunch/env_writer"
-                     :path "/usr/local/bin/env_writer.sh"
-                     :args "key1 /tmp/result_file"
+                     :docker-image "docker:///camelpunch/s3copier"
+                     :path "/s3copier/run.sh"
+                     :dir "/s3copier"
+                     :args "lattices3cp-source/commonpeople.jpg lattices3cp-destination/acommoncopy.jpg"
                      :result-file "/tmp/result_file"
-                     :env "key1=val1 key2=val2"}))
+                     :env "AWS_ACCESS_KEY_ID=blah AWS_SECRET_ACCESS_KEY=likeidtellyouplz"}))
 (defonce tasks (atom {:pending []
                       :running []
                       :successful []
@@ -37,21 +38,22 @@
 (defn handle-tasks [new-tasks]
   (swap! tasks update-tasks new-tasks))
 
-(defn log-handler [preamble content]
-  (js/console.log preamble (clj->js content)))
+(defn log-handler [body]
+  (js/console.log (clj->js body)))
 
 (def handlers
   {:tasks handle-tasks
-   :diego-response (partial log-handler "Response:")})
+   :log log-handler})
 
-(defn no-handler [message]
-  (js/console.log (str "No handler defined for message: " message)))
+(defn no-handler [key message]
+  (js/console.log (str "No handler defined for key: " key "\n\nMessage: " message)))
 
 (defn route-message [message]
+  (js/console.log "Routing: " (clj->js message))
   (let [key (-> message keys first)]
     (if (contains? handlers key)
       ((key handlers) (key message))
-      (no-handler message))))
+      (no-handler key message))))
 
 (defn handle-outgoing [ws-channel]
   (go-loop []
@@ -149,6 +151,7 @@
      (input new-task :docker-image "Docker image")
      (input new-task :path "Path to executable")
      (input new-task :args "Arguments")
+     (input new-task :dir "Directory")
      (input new-task :env "ENV")
      (input new-task :result-file "Result file")
      [:button.btn {:name (str "task" (:id @new-task))
