@@ -11,9 +11,6 @@
 
 (def task-id (atom 1))
 
-(defn sorted-resolved []
-  (map #(into (sorted-map) %) (:resolved @server/tasks)))
-
 (comment
   (refresh)
   (clear)
@@ -22,6 +19,8 @@
   (:web system)
   (stop)
   (reset)
+
+  (keys @server/state)
 
   (atat/stop-and-reset-pool! server/sched-pool)
   (diego/create-task {:id (swap! task-id inc)
@@ -41,15 +40,4 @@
                       :env "foo=bar"
                       :result-file "/tmp/result"})
   (count (diego/remote-tasks))
-  (map keys (into (sorted-map) (diego/remote-tasks)))
-  (count (sorted-resolved))
-  (last (filter #(:failed %) (sorted-resolved)))
-  (remove #(:failed %) (sorted-resolved))
-  (first (:resolved @server/tasks))
-  (reset! server/tasks {:resolved []
-                        :processing []})
-
-  (count (:failed (let [resolved (:resolved @server/tasks)
-                        {failed true successful false} (group-by :failed resolved)]
-                    {:failed failed
-                     :successful successful}))))
+  (map keys (into (sorted-map) (diego/remote-tasks))))
