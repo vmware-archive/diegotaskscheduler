@@ -1,6 +1,6 @@
 (ns diegoscheduler.components.app
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [<! >! put! go-loop go chan pipe]]
+            [clojure.core.async :refer [<! >! put! go-loop go chan pipe tap mult]]
             [diegoscheduler.diego :as diego]
             [compojure.core :refer :all]
             [compojure.route :as route]
@@ -10,7 +10,7 @@
 (defn log [msg]
   (spit "log/server.log" (str msg "\n\n")))
 
-(defn handle-incoming [ws-channel]
+(defn handle-new-tasks [ws-channel]
   (go-loop []
     (when-let [{:keys [message error] :as msg} (<! ws-channel)]
       (if error
@@ -18,34 +18,34 @@
         (diego/create-task message))
       (recur))))
 
-(defn create-ws-handler [down-ch]
+(defn create-ws-handler [updates-ch]
   (fn [{:keys [ws-channel]}]
-    (handle-incoming ws-channel)
-    (pipe down-ch ws-channel)))
+    (handle-new-tasks ws-channel)
+    (pipe updates-ch ws-channel)))
 
 (defn resolve-task [m task]
-  (-> m
-      (update-in [:resolved] conj task)))
+  (-> m (update-in [:resolved] conj task)))
 
-(defn create-routes [state down-ch]
-  (routes
-   (GET "/" [] (resource-response "index.html" {:root "public"}))
-   (GET "/ws" [] (-> (create-ws-handler down-ch) (wrap-websocket-handler)))
-   (POST "/taskfinished" {body :body}
-         (log (str "Task finished"))
-         (try
-           (let [parsed-task (diego/parse-task (slurp body))
-                 new-state (swap! state
-                                  update-in [:tasks]
-                                  resolve-task parsed-task)]
-             (log (str "About to send\n" (:tasks new-state)))
-             (put! down-ch {:tasks (:tasks new-state)})
-             {:status 200})
-           (catch Exception e
-             (log (str "Exception: " e))
-             {:status 500})))
-   (route/resources "/")
-   (route/not-found "<h1>Page not found</h1>")))
+(defn create-routes [state updates-ch]
+  (let [updates-mult (mult updates-ch)]
+    (routes
+     (GET "/" [] (resource-response "index.html" {:root "public"}))
+     (GET "/ws" []
+          (let [updates-tap (tap updates-mult (chan))]
+            (-> (create-ws-handler updates-tap) (wrap-websocket-handler))))
+     (POST "/taskfinished" {body :body}
+           (log (str "Task finished"))
+           (try
+             (let [parsed-task (diego/parse-task (slurp body))]
+               (swap! state
+                      update-in [:tasks]
+                      resolve-task parsed-task)
+               {:status 200})
+             (catch Exception e
+               (log (str "Exception: " e))
+               {:status 500})))
+     (route/resources "/")
+     (route/not-found "<h1>Page not found</h1>"))))
 
 (defrecord App [updater]
   component/Lifecycle
