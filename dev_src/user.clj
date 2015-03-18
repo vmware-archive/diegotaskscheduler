@@ -3,7 +3,6 @@
             [diegoscheduler.systems :refer [dev-system]]
             [clojure.tools.namespace.repl :refer [refresh clear]]
             [org.httpkit.server :as http-kit]
-            [diegoscheduler.server :as server]
             [diegoscheduler.diego :as diego]
             [overtone.at-at :as atat]))
 
@@ -16,13 +15,11 @@
   (clear)
 
   (go)
-  (:web system)
   (stop)
   (reset)
+  (:web system)
+  (:channel (:updater system))
 
-  (keys @server/state)
-
-  (atat/stop-and-reset-pool! server/sched-pool)
   (diego/create-task {:id (swap! task-id inc)
                       :guid (str "foo" @task-id)
                       :domain "mydomainz"
@@ -31,7 +28,7 @@
                       :args "foo /tmp/result"
                       :env "foo=bar"
                       :result-file "/tmp/result"})
-    (diego/create-task {:id (swap! task-id inc)
+  (diego/create-task {:id (swap! task-id inc)
                       :guid (str "foo" @task-id)
                       :domain "mydomainz"
                       :docker-image "docker:///camelpunch/s3copier"

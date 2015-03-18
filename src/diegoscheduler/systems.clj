@@ -1,11 +1,15 @@
 (ns diegoscheduler.systems
   (:require [com.stuartsierra.component :as component]
-            (system.components
-             [http-kit :refer [new-web-server]])
-            [diegoscheduler.server :as server]
-            [diegoscheduler.diego :as diego]
-            ))
+            [diegoscheduler.components.app :refer [new-app]]
+            [diegoscheduler.components.web :refer [new-web-server]]
+            [diegoscheduler.components.diego-updater :refer [new-diego-updater]]))
 
 (defn dev-system []
   (component/system-map
-   :web (new-web-server 8080 server/app)))
+   :updater (new-diego-updater 500)
+   :app (component/using
+         (new-app)
+         [:updater])
+   :web (component/using
+         (new-web-server 8080)
+         [:app])))

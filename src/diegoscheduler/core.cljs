@@ -49,7 +49,6 @@
   (js/console.log (str "No handler defined for key: " key "\n\nMessage: " message)))
 
 (defn route-message [message]
-  (js/console.log "Routing: " (clj->js message))
   (let [key (-> message keys first)]
     (if (contains? handlers key)
       ((key handlers) (key message))
@@ -66,14 +65,14 @@
     (when-let [{message :message
                 error :error} (<! ws-channel)]
       (if error
-        (js/console.log (str "ERROR: " error))
+        (js/console.log "ERROR: " error "\n\n" message)
         (route-message message))
       (recur))))
 
 (go
   (let [{:keys [ws-channel error]} (<! (ws-ch "ws://localhost:8080/ws"))]
     (if error
-      (js/console.log "Error:" (pr-str error))
+      (js/console.log "ERROR: " (pr-str error))
       (do
         (handle-outgoing ws-channel)
         (handle-incoming ws-channel)))))
