@@ -23,7 +23,7 @@
                       :running []
                       :successful []
                       :failed []}))
-(def upch (chan))
+(def uploads (chan))
 
 (defn update-tasks [m new-tasks]
   (let [resolved (:resolved new-tasks)
@@ -54,28 +54,30 @@
       ((key handlers) (key message))
       (no-handler key message))))
 
-(defn handle-outgoing [ws-channel]
+(defn handle-outgoing [server]
   (go-loop []
-    (when-let [msg (<! upch)]
-      (>! ws-channel msg)
+    (when-let [msg (<! uploads)]
+      (>! server msg)
       (recur))))
 
-(defn handle-incoming [ws-channel]
+(defn handle-incoming [server]
   (go-loop []
     (when-let [{message :message
-                error :error} (<! ws-channel)]
+                error :error} (<! server)]
       (if error
         (js/console.log "ERROR: " error "\n\n" message)
         (route-message message))
       (recur))))
 
-(go
-  (let [{:keys [ws-channel error]} (<! (ws-ch "ws://localhost:8080/ws"))]
-    (if error
-      (js/console.log "ERROR: " (pr-str error))
-      (do
-        (handle-outgoing ws-channel)
-        (handle-incoming ws-channel)))))
+(set! (.-onload js/window)
+      (fn []
+        (go
+          (let [{:keys [ws-channel error]} (<! (ws-ch "ws://localhost:8080/ws"))]
+            (if error
+              (js/console.log "ERROR: " (pr-str error))
+              (do
+                (handle-outgoing ws-channel)
+                (handle-incoming ws-channel)))))))
 
 (defn guid [t]
   (str "task" (:id t)))
@@ -85,7 +87,7 @@
     (assoc with-updated-id :guid (guid with-updated-id))))
 
 (defn upload-task []
-  (put! upch @new-task)
+  (put! uploads @new-task)
   (swap! new-task inc-id))
 
 (defn event-update [a attr]
