@@ -1,23 +1,24 @@
 (ns diegoscheduler.components.diego-updater
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [put! chan]]
-            [diegoscheduler.diego :as diego]
-            [overtone.at-at :as atat]))
+            [clojure.core.async :refer [put! >! <! chan timeout alt! go-loop]]
+            [diegoscheduler.diego :as diego]))
 
-(defrecord DiegoUpdater [sched-pool channel job period]
+(defrecord DiegoUpdater [sched-pool channel stopper period]
   component/Lifecycle
   (start [component]
-    (let [channel (chan)
-          sched-pool (atat/mk-pool)
-          job (atat/every period
-                          #(put! channel {:processing (diego/remote-tasks)})
-                          sched-pool)]
+    (let [stopper (chan)
+          processing-tasks (chan)]
+      (go-loop []
+        (alt!
+          (timeout period) (do
+                             (>! processing-tasks {:processing (diego/remote-tasks)})
+                             (recur))
+          stopper :stopped))
       (assoc component
-             :sched-pool sched-pool
-             :channel channel
-             :job job)))
+             :stopper stopper
+             :channel processing-tasks)))
   (stop [component]
-    (when job (atat/stop job))
+    (when stopper (put! stopper :please-stop))
     component))
 
 (defn new-diego-updater [period]

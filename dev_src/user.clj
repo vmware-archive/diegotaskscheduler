@@ -1,10 +1,10 @@
 (ns user
   (:require [reloaded.repl :refer [system init start stop go reset]]
+            [clojure.core.async :refer [put! chan]]
             [diegoscheduler.systems :refer [dev-system]]
             [clojure.tools.namespace.repl :refer [refresh clear]]
             [org.httpkit.server :as http-kit]
-            [diegoscheduler.diego :as diego]
-            [overtone.at-at :as atat]))
+            [diegoscheduler.diego :as diego]))
 
 (reloaded.repl/set-init! dev-system)
 
