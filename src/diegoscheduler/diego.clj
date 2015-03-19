@@ -18,11 +18,8 @@
 (defn remote-tasks [] (map clojure.walk/keywordize-keys (:body (GET "/tasks"))))
 
 (defn format-env [s]
-  (->> (or s "")
-       (re-seq #"(\S+)=(\S+)")
-       (map rest)
-       (map (partial interleave [:name :value]))
-       (map (partial apply array-map))))
+  (map (fn [[_ name value]] {:name name :value value})
+       (re-seq #"(\S+)=(\S+)" (or s ""))))
 
 (comment
   (format-env "a=b c=d e=f")
