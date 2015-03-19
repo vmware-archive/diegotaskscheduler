@@ -1,6 +1,6 @@
 (ns diegoscheduler.components.diego-updater
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [put! >! <! chan timeout alt! go-loop]]
+            [clojure.core.async :refer [put! >! chan timeout alt! go-loop]]
             [diegoscheduler.diego :as diego]))
 
 (defrecord DiegoUpdater [sched-pool channel stopper period]
