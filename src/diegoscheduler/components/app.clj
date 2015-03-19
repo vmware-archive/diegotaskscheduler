@@ -10,29 +10,29 @@
 (defn log [msg]
   (spit "log/server.log" (str msg "\n\n")))
 
-(defn handle-new-tasks [ws-channel]
+(defn handle-new-tasks [web-client]
   (go-loop []
-    (when-let [{:keys [message error] :as msg} (<! ws-channel)]
+    (when-let [{:keys [message error] :as msg} (<! web-client)]
       (if error
-        (>! ws-channel {:error msg})
+        (>! web-client {:error msg})
         (diego/create-task message))
       (recur))))
 
-(defn create-ws-handler [updates-ch]
-  (fn [{:keys [ws-channel]}]
-    (handle-new-tasks ws-channel)
-    (pipe updates-ch ws-channel)))
+(defn create-ws-handler [diego-updates]
+  (fn [{web-client :ws-channel}]
+    (handle-new-tasks web-client)
+    (pipe diego-updates web-client)))
 
 (defn resolve-task [m task]
   (-> m (update-in [:resolved] conj task)))
 
-(defn create-routes [state updates-ch]
-  (let [updates-mult (mult updates-ch)]
+(defn create-routes [state diego-updates]
+  (let [updates-mult (mult diego-updates)]
     (routes
      (GET "/" [] (resource-response "index.html" {:root "public"}))
      (GET "/ws" []
-          (let [updates-tap (tap updates-mult (chan))]
-            (-> (create-ws-handler updates-tap) (wrap-websocket-handler))))
+          (-> (create-ws-handler (tap updates-mult (chan)))
+              (wrap-websocket-handler)))
      (POST "/taskfinished" {body :body}
            (log (str "Task finished"))
            (try
@@ -51,14 +51,13 @@
   component/Lifecycle
   (start [component]
     (let [state (atom {:tasks {:resolved [] :processing []}})
-          down-ch (chan)
-          diego-updates-ch (:channel updater)
-          routes (create-routes state down-ch)]
+          diego-updates (chan)
+          routes (create-routes state diego-updates)]
       (go-loop []
-        (when-let [{:keys [processing]} (<! diego-updates-ch)]
-          (>! down-ch {:tasks (:tasks (swap! state
-                                             update-in [:tasks]
-                                             assoc :processing processing))})
+        (when-let [{:keys [processing]} (<! (:channel updater))]
+          (>! diego-updates (swap! state
+                                   update-in [:tasks]
+                                   assoc :processing processing))
           (recur)))
       (assoc component :handler routes)))
   (stop [component]
