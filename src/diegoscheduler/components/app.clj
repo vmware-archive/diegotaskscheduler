@@ -1,6 +1,6 @@
 (ns diegoscheduler.components.app
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [<! >! put! go-loop go chan pipe tap mult]]
+            [clojure.core.async :refer [<! >! put! go-loop go chan pipe tap mult dropping-buffer]]
             [diegoscheduler.diego :as diego]
             [compojure.core :refer :all]
             [compojure.route :as route]
@@ -31,7 +31,7 @@
     (routes
      (GET "/" [] (resource-response "index.html" {:root "public"}))
      (GET "/ws" []
-          (-> (create-ws-handler (tap updates-mult (chan)))
+          (-> (create-ws-handler (tap updates-mult (chan (dropping-buffer 1))))
               (wrap-websocket-handler)))
      (POST "/taskfinished" {body :body}
            (log (str "Task finished"))
