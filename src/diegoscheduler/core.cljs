@@ -14,8 +14,8 @@
                                  (.toString 36)
                                  (.slice 2))
                      :docker-image "docker:///camelpunch/s3copier"
-                     :path "/s3copier/run.sh"
-                     :dir "/s3copier"
+                     :path "/app/run.sh"
+                     :dir "/app"
                      :args "lattices3cp-source/commonpeople.jpg lattices3cp-destination/acommoncopy.jpg"
                      :result-file "/tmp/result_file"
                      :env "AWS_ACCESS_KEY_ID=blah AWS_SECRET_ACCESS_KEY=likeidtellyouplz"}))
