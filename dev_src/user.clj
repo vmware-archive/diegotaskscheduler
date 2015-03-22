@@ -7,7 +7,6 @@
             [diegoscheduler.diego :as diego]))
 
 (set-init! dev-system)
-(set-refresh-dirs "diegoscheduler" "diegoscheduler/components")
 
 (def task-id (atom 1))
 

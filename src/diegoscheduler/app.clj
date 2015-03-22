@@ -1,4 +1,4 @@
-(ns diegoscheduler.components.app
+(ns diegoscheduler.app
   (:require [com.stuartsierra.component :as component]
             [clojure.core.async :refer [<! >! put! go-loop go chan pipe tap mult dropping-buffer]]
             [diegoscheduler.diego :as diego]
@@ -11,6 +11,7 @@
   (spit "log/server.log" (str msg "\n\n")))
 
 (defn handle-new-tasks [web-client]
+  (log "New task")
   (go-loop []
     (when-let [{:keys [message error] :as msg} (<! web-client)]
       (if error
@@ -31,6 +32,7 @@
     (routes
      (GET "/" [] (resource-response "index.html" {:root "public"}))
      (GET "/ws" []
+          (log (str "Got /ws request"))
           (-> (create-ws-handler (tap updates-mult (chan (dropping-buffer 1))))
               (wrap-websocket-handler)))
      (POST "/taskfinished" {body :body}
@@ -50,6 +52,7 @@
 (defrecord App [updater]
   component/Lifecycle
   (start [component]
+    (log "Starting new app")
     (let [state (atom {:tasks {:resolved [] :processing []}})
           diego-updates (chan)
           routes (create-routes state diego-updates)]

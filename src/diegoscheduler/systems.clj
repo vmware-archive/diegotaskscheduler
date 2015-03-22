@@ -1,8 +1,8 @@
 (ns diegoscheduler.systems
   (:require [com.stuartsierra.component :as component]
-            [diegoscheduler.components.app :refer [new-app]]
-            [diegoscheduler.components.web :refer [new-web-server]]
-            [diegoscheduler.components.diego-updater :refer [new-diego-updater]]))
+            [diegoscheduler.app :refer [new-app]]
+            [diegoscheduler.web :refer [new-web-server]]
+            [diegoscheduler.diego-updater :refer [new-diego-updater]]))
 
 (defn dev-system []
   (component/system-map

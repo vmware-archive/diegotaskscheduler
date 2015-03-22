@@ -1,4 +1,4 @@
-(ns diegoscheduler.components.web
+(ns diegoscheduler.web
   (:require [com.stuartsierra.component :as component]
             [org.httpkit.server :refer [run-server]]))
 
