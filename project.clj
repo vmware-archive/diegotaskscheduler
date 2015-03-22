@@ -29,28 +29,23 @@
                          :vcap-app-host "192.168.1.3"
                          :api-url "http://192.168.11.11:8888/v1"}}
              :uberjar {:main diegoscheduler.systems
-                       :aot :all}}
+                       :aot :all
+                       :source-paths ["src"]}}
 
   :source-paths ["src"]
 
-  :clean-targets ^{:protect false} ["resources/public/js/compiled"]
-
-  :cljsbuild {
-    :builds [{:id "dev"
-              :source-paths ["src" "dev_src"]
-              :compiler {:output-to "resources/public/js/compiled/diegoscheduler.js"
-                         :output-dir "resources/public/js/compiled/out"
-                         :optimizations :none
-                         :main diegoscheduler.dev
-                         :asset-path "js/compiled/out"
-                         :source-map true
-                         :source-map-timestamp true
-                         :cache-analysis true }}
-             {:id "min"
-              :source-paths ["src"]
-              :compiler {:output-to "resources/public/js/compiled/diegoscheduler.js"
-                         :optimizations :advanced
-                         :pretty-print false}}]}
+  :cljsbuild
+  {:builds {:dev {:source-paths ["src" "dev_src"]
+                  :compiler {:output-to "resources/public/js/compiled/diegoscheduler.js"
+                             :optimizations :none
+                             :main diegoscheduler.dev
+                             :source-map true
+                             :source-map-timestamp true
+                             :cache-analysis true}}
+            :prod {:source-paths ["src"]
+                   :compiler {:output-to "resources/public/js/compiled/diegoscheduler.js"
+                              :optimizations :advanced
+                              :pretty-print false}}}}
 
   :figwheel {
              :http-server-root "public" ;; default and assumes "resources"

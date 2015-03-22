@@ -4,7 +4,8 @@
             [diegoscheduler.systems :refer [main-system]]
             [clojure.tools.namespace.repl :refer [refresh clear set-refresh-dirs]]
             [org.httpkit.server :as http-kit]
-            [diegoscheduler.diego :as diego]))
+            [diegoscheduler.diego :as diego]
+            [environ.core :refer [env]]))
 
 (set-init! #(main-system (:vcap-app-host env)
                          (:port env)
