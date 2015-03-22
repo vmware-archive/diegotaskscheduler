@@ -10,7 +10,7 @@
 (defn log [msg]
   (spit "log/server.log" (str msg "\n\n")))
 
-(defn handle-new-tasks [diego web-client callback-url]
+(defn handle-new-tasks [diego web-client]
   (go-loop []
     (when-let [{:keys [message error] :as msg} (<! web-client)]
       (if error
@@ -20,23 +20,22 @@
           (d/create-task diego message)))
       (recur))))
 
-(defn create-ws-handler [diego diego-updates callback-url]
-  (log (str "New WS chan: " diego-updates "\nCallback URL: " callback-url))
+(defn create-ws-handler [diego diego-updates]
+  (log (str "New WS chan: " diego-updates "\nCallback URL: " (:callback-url diego)))
   (fn [{web-client :ws-channel}]
-    (handle-new-tasks diego web-client callback-url)
+    (handle-new-tasks diego web-client)
     (pipe diego-updates web-client)))
 
 (defn resolve-task [m task]
   (-> m (update-in [:resolved] conj task)))
 
-(defn create-routes [diego state diego-updates callback-url]
+(defn create-routes [diego state diego-updates]
   (let [updates-mult (mult diego-updates)]
     (routes
      (GET "/" [] (resource-response "index.html" {:root "public"}))
      (GET "/ws" []
           (log (str "Got /ws request"))
-          (-> (create-ws-handler diego (tap updates-mult (chan (dropping-buffer 1)))
-                                 callback-url)
+          (-> (create-ws-handler diego (tap updates-mult (chan (dropping-buffer 1))))
               (wrap-websocket-handler)))
      (POST "/taskfinished" {body :body}
            (log (str "Task finished"))
@@ -58,7 +57,7 @@
     (log "Starting new app")
     (let [state (atom {:tasks {:resolved [] :processing []}})
           diego-updates (chan)
-          routes (create-routes diego state diego-updates (:callback-url diego))]
+          routes (create-routes diego state diego-updates)]
       (go-loop []
         (when-let [{:keys [processing]} (<! (:channel diego))]
           (>! diego-updates (swap! state
