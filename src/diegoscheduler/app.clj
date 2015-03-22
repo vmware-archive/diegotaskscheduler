@@ -8,7 +8,7 @@
             [chord.http-kit :refer [wrap-websocket-handler]]))
 
 (defn log [msg]
-  (spit "log/server.log" (str msg "\n\n")))
+  (println msg))
 
 (defn handle-new-tasks [diego web-client]
   (go-loop []
