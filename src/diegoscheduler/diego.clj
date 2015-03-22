@@ -1,5 +1,7 @@
 (ns diegoscheduler.diego
-  (:require [clj-http.client :as client]
+  (:require [com.stuartsierra.component :as component]
+            [clojure.core.async :refer [put! >! chan timeout alt! go-loop]]
+            [clj-http.client :as client]
             [slingshot.slingshot :refer [try+]]))
 
 (def api-url "http://192.168.11.11:8888/v1")
@@ -43,3 +45,24 @@
      task)
    (catch [:status 400] {:keys [body]}
      {})))
+
+(defrecord Diego [channel stopper period]
+  component/Lifecycle
+  (start [component]
+    (let [stopper (chan)
+          processing-tasks (chan)]
+      (go-loop []
+        (alt!
+          (timeout period) (do
+                             (>! processing-tasks {:processing (remote-tasks)})
+                             (recur))
+          stopper :stopped))
+      (assoc component
+             :stopper stopper
+             :channel processing-tasks)))
+  (stop [component]
+    (when stopper (put! stopper :please-stop))
+    component))
+
+(defn new-diego [period]
+  (map->Diego {:period period}))

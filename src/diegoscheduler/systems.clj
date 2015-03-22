@@ -3,7 +3,7 @@
             [environ.core :refer [env]]
             [diegoscheduler.app :refer [new-app]]
             [diegoscheduler.web :refer [new-web-server]]
-            [diegoscheduler.diego-updater :refer [new-diego-updater]]))
+            [diegoscheduler.diego :refer [new-diego]]))
 
 (def ^:private callback-host (env :vcap-app-host))
 (def ^:private port (env :port))
@@ -12,10 +12,10 @@
 
 (defn dev-system []
   (component/system-map
-   :updater (new-diego-updater 500)
+   :diego (new-diego 500)
    :app (component/using
          (new-app callback-url)
-         [:updater])
+         [:diego])
    :web (component/using
          (new-web-server port)
          [:app])))
