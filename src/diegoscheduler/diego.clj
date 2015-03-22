@@ -25,26 +25,8 @@
   (format-env nil)
   )
 
-(defn create-task [{:keys [args id guid dir domain docker-image env path result-file] :as message} completion-callback-url]
-  (try+
-   (let [task {:domain domain
-               :task_guid guid
-               :log_guid guid
-               :stack "lucid64"
-               :privileged false
-               :rootfs docker-image
-               :action {:run {:path path
-                              :args (clojure.string/split args #" ")}}
-               :completion_callback_url completion-callback-url
-               :env (format-env env)
-               :dir dir
-               :result_file result-file
-               :disk_mb 1000
-               :memory_mb 1000}]
-     (add-task task)
-     task)
-   (catch [:status 400] {:keys [body]}
-     {})))
+(defprotocol Tasks
+  (create-task [this message completion-callback-url]))
 
 (defrecord Diego [channel stopper period callback-url]
   component/Lifecycle
@@ -63,7 +45,30 @@
              :callback-url callback-url)))
   (stop [component]
     (when stopper (put! stopper :please-stop))
-    component))
+    component)
+
+  Tasks
+  (create-task [this {:keys [args id guid dir domain docker-image env path result-file] :as message} completion-callback-url]
+    (try+
+     (let [task {:domain domain
+                 :task_guid guid
+                 :log_guid guid
+                 :stack "lucid64"
+                 :privileged false
+                 :rootfs docker-image
+                 :action {:run {:path path
+                                :args (clojure.string/split args #" ")}}
+                 :completion_callback_url completion-callback-url
+                 :env (format-env env)
+                 :dir dir
+                 :result_file result-file
+                 :disk_mb 1000
+                 :memory_mb 1000}]
+       (add-task task)
+       task)
+     (catch [:status 400] {:keys [body]}
+       {}))
+))
 
 (defn new-diego [period callback-url]
   (map->Diego {:period period
