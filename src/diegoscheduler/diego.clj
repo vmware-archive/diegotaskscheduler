@@ -4,17 +4,8 @@
             [clj-http.client :as client]
             [slingshot.slingshot :refer [try+]]))
 
-(def api-url "http://192.168.11.11:8888/v1")
-(defn GET [path]
-  (client/get (str api-url path) {:as :json}))
-(defn POST [path body]
-  (client/post (str api-url path) {:body body :as :json}))
-(defn add-task [opts] (POST "/tasks" (client/json-encode opts)))
-
 (defn parse-task [raw-task]
   (clojure.walk/keywordize-keys (client/json-decode raw-task)))
-
-(defn remote-tasks [] (map clojure.walk/keywordize-keys (:body (GET "/tasks"))))
 
 (defn format-env [s]
   (map (fn [[_ name value]] {:name name :value value})
@@ -26,18 +17,23 @@
   )
 
 (defprotocol Tasks
-  (create-task [this message]))
+  (create-task [this message])
+  (remote-tasks [this]))
 
-(defrecord Diego [channel stopper period callback-url]
+(defprotocol HTTPWithBaseURI
+  (GET [this path])
+  (POST [this path body]))
+
+(defrecord Diego [channel stopper interval api-url callback-url]
   component/Lifecycle
   (start [component]
     (let [stopper (chan)
           processing-tasks (chan)]
       (go-loop []
         (alt!
-          (timeout period) (do
-                             (>! processing-tasks {:processing (remote-tasks)})
-                             (recur))
+          (timeout interval) (do
+                               (>! processing-tasks {:processing (remote-tasks component)})
+                               (recur))
           stopper :stopped))
       (assoc component
              :stopper stopper
@@ -46,6 +42,12 @@
   (stop [component]
     (when stopper (put! stopper :please-stop))
     component)
+
+  HTTPWithBaseURI
+  (GET [{api-url :api-url} path]
+    (client/get (str api-url path) {:as :json}))
+  (POST [{api-url :api-url} path body]
+    (client/post (str api-url path) {:body body :as :json}))
 
   Tasks
   (create-task [this {:keys [args id guid dir domain docker-image env path result-file]}]
@@ -64,11 +66,15 @@
                  :result_file result-file
                  :disk_mb 1000
                  :memory_mb 1000}]
-       (add-task task)
+       (POST this "/tasks" (client/json-encode task))
        task)
      (catch [:status 400] {:keys [body]}
-       {}))))
+       {})))
 
-(defn new-diego [period callback-url]
-  (map->Diego {:period period
+  (remote-tasks [this]
+    (map clojure.walk/keywordize-keys (:body (GET this "/tasks")))))
+
+(defn new-diego [interval api-url callback-url]
+  (map->Diego {:interval interval
+               :api-url api-url
                :callback-url callback-url}))
