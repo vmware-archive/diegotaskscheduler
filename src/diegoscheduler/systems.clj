@@ -1,11 +1,14 @@
 (ns diegoscheduler.systems
   (:require [com.stuartsierra.component :as component]
+            [environ.core :refer [env]]
             [diegoscheduler.app :refer [new-app]]
             [diegoscheduler.web :refer [new-web-server]]
             [diegoscheduler.diego-updater :refer [new-diego-updater]]))
 
+(def ^:private callback-host (env :vcap-app-host))
+(def ^:private port (env :port))
 (def ^:private callback-url
-  "http://192.168.1.3:8081/taskfinished")
+  (str "http://" callback-host ":" port "/taskfinished"))
 
 (defn dev-system []
   (component/system-map
@@ -14,5 +17,5 @@
          (new-app callback-url)
          [:updater])
    :web (component/using
-         (new-web-server 8081)
+         (new-web-server port)
          [:app])))

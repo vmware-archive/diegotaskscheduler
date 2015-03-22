@@ -6,6 +6,7 @@
 
   :dependencies [[org.clojure/clojure "1.7.0-alpha5"]
                  [org.danielsz/system "0.1.4"]
+                 [environ "1.0.0"]
                  [http-kit "2.1.18"]
                  [clj-http "1.0.1"]
                  [compojure "1.3.2"]
@@ -16,13 +17,16 @@
                  [reagent "0.5.0-alpha3"]]
 
   :plugins [[lein-cljsbuild "1.0.4"]
-            [lein-figwheel "0.2.5-SNAPSHOT"]]
+            [lein-figwheel "0.2.5-SNAPSHOT"]
+            [lein-environ "1.0.0"]]
 
   :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.8"]]
                    :repl-options {:init-ns user}
                    :source-paths ["dev_src"]
                    :plugins [[cider/cider-nrepl "0.8.2"]
-                             [com.cemerick/austin "0.1.6"]]}}
+                             [com.cemerick/austin "0.1.6"]]
+                   :env {:port 8081
+                         :vcap-app-host "192.168.1.3"}}}
 
   :source-paths ["src"]
 
