@@ -69,10 +69,17 @@
         (route-message message))
       (recur))))
 
+(defn ws-url [loc]
+  (let [protocol (.-protocol loc)
+        hostname (.-hostname loc)
+        port (.-port loc)
+        scheme (if (= "https:" protocol) "wss://" "ws://")]
+    (str scheme hostname ":" port "/ws")))
+
 (set! (.-onload js/window)
       (fn []
         (go
-          (let [{:keys [ws-channel error]} (<! (ws-ch "ws://localhost:8080/ws"))]
+          (let [{:keys [ws-channel error]} (<! (ws-ch (ws-url js/window.location)))]
             (if error
               (js/console.log "ERROR: " (pr-str error))
               (do
