@@ -17,7 +17,7 @@
         (>! web-client {:error msg})
         (do
           (log "New task")
-          (d/create-task diego message callback-url)))
+          (d/create-task diego message)))
       (recur))))
 
 (defn create-ws-handler [diego diego-updates callback-url]

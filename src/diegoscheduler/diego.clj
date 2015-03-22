@@ -26,7 +26,7 @@
   )
 
 (defprotocol Tasks
-  (create-task [this message completion-callback-url]))
+  (create-task [this message]))
 
 (defrecord Diego [channel stopper period callback-url]
   component/Lifecycle
@@ -48,7 +48,7 @@
     component)
 
   Tasks
-  (create-task [this {:keys [args id guid dir domain docker-image env path result-file] :as message} completion-callback-url]
+  (create-task [this {:keys [args id guid dir domain docker-image env path result-file]}]
     (try+
      (let [task {:domain domain
                  :task_guid guid
@@ -58,7 +58,7 @@
                  :rootfs docker-image
                  :action {:run {:path path
                                 :args (clojure.string/split args #" ")}}
-                 :completion_callback_url completion-callback-url
+                 :completion_callback_url (:callback-url this)
                  :env (format-env env)
                  :dir dir
                  :result_file result-file
@@ -67,8 +67,7 @@
        (add-task task)
        task)
      (catch [:status 400] {:keys [body]}
-       {}))
-))
+       {}))))
 
 (defn new-diego [period callback-url]
   (map->Diego {:period period
