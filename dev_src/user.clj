@@ -1,12 +1,13 @@
 (ns user
-  (:require [reloaded.repl :refer [system init start stop go reset]]
+  (:require [reloaded.repl :refer [system init start stop go reset set-init!]]
             [clojure.core.async :refer [put! chan]]
             [diegoscheduler.systems :refer [dev-system]]
-            [clojure.tools.namespace.repl :refer [refresh clear]]
+            [clojure.tools.namespace.repl :refer [refresh clear set-refresh-dirs]]
             [org.httpkit.server :as http-kit]
             [diegoscheduler.diego :as diego]))
 
-(reloaded.repl/set-init! dev-system)
+(set-init! dev-system)
+(set-refresh-dirs "diegoscheduler" "diegoscheduler/components")
 
 (def task-id (atom 1))
 

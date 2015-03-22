@@ -25,7 +25,6 @@
                              [com.cemerick/austin "0.1.6"]]}}
 
   :source-paths ["src"]
-  :main diegoscheduler.server
 
   :clean-targets ^{:protect false} ["resources/public/js/compiled"]
 
@@ -43,7 +42,6 @@
              {:id "min"
               :source-paths ["src"]
               :compiler {:output-to "resources/public/js/compiled/diegoscheduler.js"
-                         :main diegoscheduler.server
                          :optimizations :advanced
                          :pretty-print false}}]}
 
