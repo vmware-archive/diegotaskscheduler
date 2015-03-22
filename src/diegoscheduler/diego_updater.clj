@@ -3,7 +3,7 @@
             [clojure.core.async :refer [put! >! chan timeout alt! go-loop]]
             [diegoscheduler.diego :as diego]))
 
-(defrecord DiegoUpdater [sched-pool channel stopper period]
+(defrecord DiegoUpdater [channel stopper period]
   component/Lifecycle
   (start [component]
     (let [stopper (chan)
