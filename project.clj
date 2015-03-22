@@ -27,7 +27,9 @@
                              [com.cemerick/austin "0.1.6"]]
                    :env {:port 8081
                          :vcap-app-host "192.168.1.3"
-                         :api-url "http://192.168.11.11:8888/v1"}}}
+                         :api-url "http://192.168.11.11:8888/v1"}}
+             :uberjar {:main diegoscheduler.systems
+                       :aot :all}}
 
   :source-paths ["src"]
 
