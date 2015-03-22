@@ -166,10 +166,12 @@
                    :on-click upload-task} "Add " (guid @new-task)]]]
    (section :pending "Pending" {:task_guid "GUID"
                                 :domain "Domain"
-                                :rootfs "Docker image"})
+                                :rootfs "Docker image"
+                                :completion_callback_url "Callback URL"})
    (section :running "Running" {:task_guid "GUID"
                                 :domain "Domain"
-                                :rootfs "Docker image"})
+                                :rootfs "Docker image"
+                                :completion_callback_url "Callback URL"})
    (section :successful "Successful" {:task_guid "GUID"
                                       :domain "Domain"
                                       :rootfs "Docker image"
