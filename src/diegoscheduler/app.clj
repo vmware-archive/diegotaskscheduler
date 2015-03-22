@@ -52,13 +52,13 @@
      (route/resources "/")
      (route/not-found "<h1>Page not found</h1>"))))
 
-(defrecord App [callback-url diego]
+(defrecord App [diego]
   component/Lifecycle
   (start [component]
     (log "Starting new app")
     (let [state (atom {:tasks {:resolved [] :processing []}})
           diego-updates (chan)
-          routes (create-routes state diego-updates callback-url)]
+          routes (create-routes state diego-updates (:callback-url diego))]
       (go-loop []
         (when-let [{:keys [processing]} (<! (:channel diego))]
           (>! diego-updates (swap! state
@@ -71,5 +71,5 @@
   (stop [component]
     component))
 
-(defn new-app [callback-url]
-  (map->App {:callback-url callback-url}))
+(defn new-app []
+  (map->App {}))

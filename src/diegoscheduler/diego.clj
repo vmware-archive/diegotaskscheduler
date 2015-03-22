@@ -46,7 +46,7 @@
    (catch [:status 400] {:keys [body]}
      {})))
 
-(defrecord Diego [channel stopper period]
+(defrecord Diego [channel stopper period callback-url]
   component/Lifecycle
   (start [component]
     (let [stopper (chan)
@@ -59,10 +59,12 @@
           stopper :stopped))
       (assoc component
              :stopper stopper
-             :channel processing-tasks)))
+             :channel processing-tasks
+             :callback-url callback-url)))
   (stop [component]
     (when stopper (put! stopper :please-stop))
     component))
 
-(defn new-diego [period]
-  (map->Diego {:period period}))
+(defn new-diego [period callback-url]
+  (map->Diego {:period period
+               :callback-url callback-url}))

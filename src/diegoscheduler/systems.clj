@@ -12,9 +12,9 @@
 
 (defn dev-system []
   (component/system-map
-   :diego (new-diego 500)
+   :diego (new-diego 500 callback-url)
    :app (component/using
-         (new-app callback-url)
+         (new-app)
          [:diego])
    :web (component/using
          (new-web-server port)
