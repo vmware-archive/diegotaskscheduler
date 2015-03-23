@@ -5,9 +5,16 @@
             [clojure.tools.namespace.repl :refer [refresh clear set-refresh-dirs]]
             [org.httpkit.server :as http-kit]
             [diegoscheduler.diego :as diego]
-            [environ.core :refer [env]]))
+            [environ.core :refer [env]])
+  (:import [java.net InetAddress]))
 
-(set-init! #(main-system (:vcap-app-host env)
+(def local-ip
+  (->> (InetAddress/getLocalHost)
+       .toString
+       (re-seq #"\d+.\d+\.\d+\.\d+")
+       first))
+
+(set-init! #(main-system local-ip
                          (:port env)
                          (:api-url env)))
 
