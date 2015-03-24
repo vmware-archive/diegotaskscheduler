@@ -1,5 +1,6 @@
 (ns diegoscheduler.systems
   (:require [com.stuartsierra.component :as component]
+            [clojure.core.async :refer [chan]]
             [environ.core :refer [env]]
             [diegoscheduler.app :refer [new-app]]
             [diegoscheduler.web :refer [new-web-server]]
@@ -9,12 +10,12 @@
 (def ^:private update-interval 500)
 
 (defn main-system [port-str api-url callback-url]
-  (let [port (Integer. port-str)]
+  (let [port (Integer. port-str)
+        new-tasks (chan)
+        processing-tasks (chan)]
     (component/system-map
-     :diego (new-diego update-interval api-url callback-url)
-     :app (component/using
-           (new-app)
-           [:diego])
+     :diego (new-diego new-tasks processing-tasks update-interval api-url callback-url)
+     :app (new-app new-tasks processing-tasks)
      :web (component/using
            (new-web-server port)
            [:app]))))

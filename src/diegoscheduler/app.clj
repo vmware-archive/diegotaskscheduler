@@ -10,32 +10,32 @@
 (defn log [msg]
   (println msg))
 
-(defn handle-new-tasks [diego web-client]
+(defn handle-new-tasks [new-tasks web-client]
   (go-loop []
     (when-let [{:keys [message error] :as msg} (<! web-client)]
       (if error
         (>! web-client {:error msg})
         (do
           (log "New task")
-          (d/create-task diego message)))
+          (>! new-tasks message)))
       (recur))))
 
-(defn create-ws-handler [diego diego-updates]
-  (log (str "New WS chan: " diego-updates "\nCallback URL: " (:callback-url diego)))
+(defn create-ws-handler [new-tasks task-updates-for-client]
+  (log (str "New WS chan: " task-updates-for-client))
   (fn [{web-client :ws-channel}]
-    (handle-new-tasks diego web-client)
-    (pipe diego-updates web-client)))
+    (handle-new-tasks new-tasks web-client)
+    (pipe task-updates-for-client web-client)))
 
 (defn resolve-task [m task]
   (-> m (update-in [:resolved] conj task)))
 
-(defn create-routes [diego state diego-updates]
-  (let [updates-mult (mult diego-updates)]
+(defn create-routes [state new-tasks task-updates-for-client]
+  (let [updates-mult (mult task-updates-for-client)]
     (routes
      (GET "/" [] (resource-response "index.html" {:root "public"}))
      (GET "/ws" []
           (log (str "Got /ws request"))
-          (-> (create-ws-handler diego (tap updates-mult (chan (dropping-buffer 1))))
+          (-> (create-ws-handler new-tasks (tap updates-mult (chan (dropping-buffer 1))))
               (wrap-websocket-handler)))
      (POST "/taskfinished" {body :body}
            (log (str "Task finished"))
@@ -51,18 +51,18 @@
      (route/resources "/")
      (route/not-found "<h1>Page not found</h1>"))))
 
-(defrecord App [diego]
+(defrecord App [new-tasks processing-tasks]
   component/Lifecycle
   (start [component]
     (log "Starting new app")
     (let [state (atom {:tasks {:resolved [] :processing []}})
-          diego-updates (chan)
-          routes (create-routes diego state diego-updates)]
+          task-updates-for-client (chan)
+          routes (create-routes state new-tasks task-updates-for-client)]
       (go-loop []
-        (when-let [{:keys [processing]} (<! (:channel diego))]
-          (>! diego-updates (swap! state
-                                   update-in [:tasks]
-                                   assoc :processing processing))
+        (when-let [{:keys [processing]} (<! processing-tasks)]
+          (>! task-updates-for-client (swap! state
+                                             update-in [:tasks]
+                                             assoc :processing processing))
           (recur)))
       (assoc component
              :handler routes
@@ -70,5 +70,6 @@
   (stop [component]
     component))
 
-(defn new-app []
-  (map->App {}))
+(defn new-app [new-tasks processing-tasks]
+  (map->App {:new-tasks new-tasks
+             :processing-tasks processing-tasks}))

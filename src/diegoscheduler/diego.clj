@@ -24,20 +24,21 @@
   (GET [this path])
   (POST [this path body]))
 
-(defrecord Diego [channel stopper interval api-url callback-url]
+(defrecord Diego [new-tasks processing-tasks stopper interval api-url callback-url]
   component/Lifecycle
   (start [component]
-    (let [stopper (chan)
-          processing-tasks (chan)]
+    (let [stopper (chan)]
       (go-loop []
         (alt!
-          (timeout interval) (do
-                               (>! processing-tasks {:processing (remote-tasks component)})
-                               (recur))
+          new-tasks ([task ch]
+                     (create-task component task)
+                     (recur))
+          (timeout interval) ([_ _]
+                              (>! processing-tasks {:processing (remote-tasks component)})
+                              (recur))
           stopper :stopped))
       (assoc component
              :stopper stopper
-             :channel processing-tasks
              :callback-url callback-url)))
   (stop [component]
     (when stopper (put! stopper :please-stop))
@@ -74,7 +75,9 @@
   (remote-tasks [this]
     (map clojure.walk/keywordize-keys (:body (GET this "/tasks")))))
 
-(defn new-diego [interval api-url callback-url]
-  (map->Diego {:interval interval
+(defn new-diego [new-tasks processing-tasks interval api-url callback-url]
+  (map->Diego {:new-tasks new-tasks
+               :processing-tasks processing-tasks
+               :interval interval
                :api-url api-url
                :callback-url callback-url}))
