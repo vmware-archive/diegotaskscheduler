@@ -14,9 +14,9 @@
        (re-seq #"\d+.\d+\.\d+\.\d+")
        first))
 
-(set-init! #(main-system local-ip
-                         (:port env)
-                         (:api-url env)))
+(set-init! #(main-system (:port env)
+                         (:api-url env)
+                         (str "http://" local-ip ":" (:port env) "/taskfinished")))
 
 (def task-id (atom 1))
 

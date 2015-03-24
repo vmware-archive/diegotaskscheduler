@@ -8,9 +8,8 @@
 
 (def ^:private update-interval 500)
 
-(defn main-system [host port-str api-url]
-  (let [port (Integer. port-str)
-        callback-url (str "http://" host ":" port "/taskfinished")]
+(defn main-system [port-str api-url callback-url]
+  (let [port (Integer. port-str)]
     (component/system-map
      :diego (new-diego update-interval api-url callback-url)
      :app (component/using
@@ -21,9 +20,9 @@
            [:app]))))
 
 (defn -main []
-  (let [{:keys [vcap-app-host port api-url]} env]
-    (if (and vcap-app-host port api-url)
-      (component/start (main-system vcap-app-host port api-url))
+  (let [{:keys [port api-url callback-url]} env]
+    (if (and port api-url callback-url)
+      (component/start (main-system port api-url callback-url))
       (do
-        (.println *err* "ERROR: must set VCAP_APP_HOST PORT API_URL")
+        (.println *err* "ERROR: must set PORT, API_URL and CALLBACK_URL.")
         (System/exit 1)))))
