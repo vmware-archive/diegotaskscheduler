@@ -18,32 +18,32 @@
   )
 
 (defn- create-task [{callback-url :callback-url
-                     api-url :api-url}
+                     postfn :postfn}
                     {:keys [args id guid dir domain docker-image env path result-file]}]
-  (let [task {:domain domain
-              :task_guid guid
-              :log_guid guid
-              :stack "lucid64"
-              :privileged false
-              :rootfs docker-image
-              :action {:run {:path path
-                             :args (clojure.string/split args #" ")}}
-              :completion_callback_url callback-url
-              :env (format-env env)
-              :dir dir
-              :result_file result-file
-              :disk_mb 1000
-              :memory_mb 1000}]
-    (http/POST (str api-url "/tasks") task)))
+  (postfn {:domain domain
+           :task_guid guid
+           :log_guid guid
+           :stack "lucid64"
+           :privileged false
+           :rootfs docker-image
+           :action {:run {:path path
+                          :args (clojure.string/split args #" ")}}
+           :completion_callback_url callback-url
+           :env (format-env env)
+           :dir dir
+           :result_file result-file
+           :disk_mb 1000
+           :memory_mb 1000}))
 
-(defn- remote-tasks [{api-url :api-url}]
-  (let [[error, result] (http/GET (str api-url "/tasks"))]
+(defn- remote-tasks [{getfn :getfn}]
+  (let [[error, result] (getfn)]
     (if error
       (println error)
       result)))
 
 (defrecord Diego [new-tasks processing-tasks schedule
-                  api-url callback-url
+                  getfn postfn
+                  callback-url
                   stopper]
   component/Lifecycle
   (start [component]
@@ -63,9 +63,11 @@
     component))
 
 (defn new-diego [new-tasks processing-tasks schedule
-                 api-url callback-url]
+                 getfn postfn
+                 callback-url]
   (map->Diego {:new-tasks new-tasks
                :processing-tasks processing-tasks
                :schedule schedule
-               :api-url api-url
+               :getfn getfn
+               :postfn postfn
                :callback-url callback-url}))

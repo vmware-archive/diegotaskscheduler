@@ -4,7 +4,8 @@
             [environ.core :refer [env]]
             [diegoscheduler.app :refer [new-app]]
             [diegoscheduler.web :refer [new-web-server]]
-            [diegoscheduler.diego :refer [new-diego]])
+            [diegoscheduler.diego :refer [new-diego]]
+            [diegoscheduler.http :as http])
   (:gen-class))
 
 (def ^:private update-interval 500)
@@ -13,10 +14,14 @@
   (let [port (Integer. port-str)
         new-tasks (chan)
         processing-tasks (chan)
-        schedule (timeout update-interval)]
+        schedule (timeout update-interval)
+        tasks-url (str api-url "/tasks")
+        getfn (fn [] (http/GET tasks-url))
+        postfn (fn [task] (http/POST tasks-url task))]
     (component/system-map
      :diego (new-diego new-tasks processing-tasks schedule
-                       api-url callback-url)
+                       getfn postfn
+                       callback-url)
      :app (new-app new-tasks processing-tasks)
      :web (component/using
            (new-web-server port)
