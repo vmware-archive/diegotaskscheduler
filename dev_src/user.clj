@@ -30,21 +30,21 @@
   (:web system)
   (:channel (:updater system))
 
-  (diego/create-task {:id (swap! task-id inc)
-                      :guid (str "foo" @task-id)
-                      :domain "mydomainz"
-                      :docker-image "docker:///camelpunch/env_writer"
-                      :path "/usr/local/bin/env_writer.sh"
-                      :args "foo /tmp/result"
-                      :env "foo=bar"
-                      :result-file "/tmp/result"})
-  (diego/create-task {:id (swap! task-id inc)
-                      :guid (str "foo" @task-id)
-                      :domain "mydomainz"
-                      :docker-image "docker:///camelpunch/s3copier"
-                      :path "/bin/echo"
-                      :args "foo"
-                      :env "foo=bar"
-                      :result-file "/tmp/result"})
-  (count (diego/remote-tasks))
+  (diego/create-task (:diego system) {:id (swap! task-id inc)
+                                      :guid (str "foo" @task-id)
+                                      :domain "mydomainz"
+                                      :docker-image "docker:///camelpunch/env_writer"
+                                      :path "/usr/local/bin/env_writer.sh"
+                                      :args "foo /tmp/result"
+                                      :env "foo=bar"
+                                      :result-file "/tmp/result"})
+  (diego/create-task (:diego system) {:id (swap! task-id inc)
+                                      :guid (str "foo" @task-id)
+                                      :domain "mydomainz"
+                                      :docker-image "docker:///camelpunch/s3copier"
+                                      :path "/bin/echo"
+                                      :args "foo"
+                                      :env "foo=bar"
+                                      :result-file "/tmp/result"})
+  (count (diego/remote-tasks (:diego system)))
   (map keys (into (sorted-map) (diego/remote-tasks))))
