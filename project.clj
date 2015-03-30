@@ -20,6 +20,7 @@
             [lein-environ "1.0.0"]]
 
   :source-paths ["src"]
+  :test-paths ["src/test/diegoscheduler"]
 
   :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.8"]
                                   [figwheel "0.2.5"]]
