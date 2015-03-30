@@ -15,6 +15,7 @@
         new-tasks (chan)
         processing-tasks (chan 1 (map :processing))
         finished-tasks (chan)
+        client-pushes (chan)
         schedule (timeout update-interval)
         tasks-url (str api-url "/tasks")
         getfn (fn [] (http/GET tasks-url))
@@ -23,10 +24,8 @@
      :diego (new-diego new-tasks processing-tasks schedule
                        getfn postfn
                        callback-url)
-     :app (new-app new-tasks processing-tasks finished-tasks)
-     :web (component/using
-           (new-web-server port)
-           [:app]))))
+     :app (new-app new-tasks processing-tasks finished-tasks client-pushes)
+     :web (new-web-server new-tasks finished-tasks client-pushes port))))
 
 (defn -main []
   (let [{:keys [port api-url callback-url]} env]
