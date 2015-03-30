@@ -1,6 +1,6 @@
 (ns diegoscheduler.app
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [<! >! put! go-loop go chan pipe tap mult dropping-buffer]]
+            [clojure.core.async :refer [<! >! put! go-loop go chan pipe tap mult dropping-buffer alt!]]
             [diegoscheduler.diego :as d]
             [compojure.core :refer :all]
             [compojure.route :as route]
@@ -29,7 +29,7 @@
 (defn resolve-task [m task]
   (update-in m [:resolved] conj task))
 
-(defn create-routes [state new-tasks client-pushes]
+(defn create-routes [state new-tasks finished-tasks client-pushes]
   (let [updates-mult (mult client-pushes)]
     (routes
      (GET "/" [] (resource-response "index.html" {:root "public"}))
@@ -41,9 +41,7 @@
            (log (str "Task finished"))
            (try
              (let [parsed-task (d/parse-task (slurp body))]
-               (swap! state
-                      update-in [:tasks]
-                      resolve-task parsed-task)
+               (put! finished-tasks parsed-task)
                {:status 200})
              (catch Exception e
                (log (str "Exception: " e))
@@ -51,25 +49,32 @@
      (route/resources "/")
      (route/not-found "<h1>Page not found</h1>"))))
 
-(defrecord App [new-tasks processing-tasks]
+(defrecord App [new-tasks processing-tasks finished-tasks]
   component/Lifecycle
   (start [component]
     (log "Starting new app")
     (let [state (atom {:tasks {:resolved [] :processing []}})
           client-pushes (chan)
-          routes (create-routes state new-tasks client-pushes)]
+          routes (create-routes state new-tasks finished-tasks client-pushes)]
       (go-loop []
-        (when-let [{:keys [processing]} (<! processing-tasks)]
-          (>! client-pushes (swap! state
-                                   update-in [:tasks]
-                                   assoc :processing processing))
-          (recur)))
+        (alt!
+          processing-tasks ([tasks _]
+                            (>! client-pushes (swap! state
+                                                     update-in [:tasks]
+                                                     assoc :processing tasks))
+                            (recur))
+          finished-tasks ([task _]
+                          (swap! state
+                                 update-in [:tasks]
+                                 resolve-task task)
+                          (recur))))
       (assoc component
              :handler routes
              :state state)))
   (stop [component]
     component))
 
-(defn new-app [new-tasks processing-tasks]
+(defn new-app [new-tasks processing-tasks finished-tasks]
   (map->App {:new-tasks new-tasks
-             :processing-tasks processing-tasks}))
+             :processing-tasks processing-tasks
+             :finished-tasks finished-tasks}))
