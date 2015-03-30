@@ -1,6 +1,6 @@
 (ns diegoscheduler.diego
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [put! >! chan timeout alt! go-loop]]
+            [clojure.core.async :refer [put! >! chan alt! go-loop]]
             [clj-http.client :as client]
             [slingshot.slingshot :refer [try+]]
             [diegoscheduler.http :as http]))
@@ -42,7 +42,7 @@
       (println error)
       result)))
 
-(defrecord Diego [new-tasks processing-tasks stopper interval api-url callback-url]
+(defrecord Diego [new-tasks processing-tasks stopper schedule api-url callback-url]
   component/Lifecycle
   (start [component]
     (let [stopper (chan)]
@@ -51,9 +51,9 @@
           new-tasks ([task _]
                      (create-task component task)
                      (recur))
-          (timeout interval) ([_ _]
-                              (>! processing-tasks {:processing (remote-tasks component)})
-                              (recur))
+          schedule ([_ _]
+                    (>! processing-tasks {:processing (remote-tasks component)})
+                    (recur))
           stopper :stopped))
       (assoc component
              :stopper stopper
@@ -63,9 +63,9 @@
     (when stopper (put! stopper :please-stop))
     component))
 
-(defn new-diego [new-tasks processing-tasks interval api-url callback-url]
+(defn new-diego [new-tasks processing-tasks schedule api-url callback-url]
   (map->Diego {:new-tasks new-tasks
                :processing-tasks processing-tasks
-               :interval interval
+               :schedule schedule
                :api-url api-url
                :callback-url callback-url}))
