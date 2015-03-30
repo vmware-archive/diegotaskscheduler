@@ -14,3 +14,4 @@ pom.xml
 .#*
 log/*.log
 .lein-env
+.lein-failures
