@@ -8,7 +8,7 @@
 (defn parse-task [raw-task]
   (clojure.walk/keywordize-keys (client/json-decode raw-task)))
 
-(defn format-env [s]
+(defn- format-env [s]
   (map (fn [[_ name value]] {:name name :value value})
        (re-seq #"(\S+)=(\S+)" (or s ""))))
 
@@ -17,9 +17,30 @@
   (format-env nil)
   )
 
-(defprotocol Tasks
-  (create-task [this message])
-  (remote-tasks [this]))
+(defn- create-task [{callback-url :callback-url
+                     api-url :api-url}
+                    {:keys [args id guid dir domain docker-image env path result-file]}]
+  (let [task {:domain domain
+              :task_guid guid
+              :log_guid guid
+              :stack "lucid64"
+              :privileged false
+              :rootfs docker-image
+              :action {:run {:path path
+                             :args (clojure.string/split args #" ")}}
+              :completion_callback_url callback-url
+              :env (format-env env)
+              :dir dir
+              :result_file result-file
+              :disk_mb 1000
+              :memory_mb 1000}]
+    (http/POST (str api-url "/tasks") task)))
+
+(defn- remote-tasks [{api-url :api-url}]
+  (let [[error, result] (http/GET (str api-url "/tasks"))]
+    (if error
+      (println error)
+      result)))
 
 (defrecord Diego [new-tasks processing-tasks stopper interval api-url callback-url]
   component/Lifecycle
@@ -27,7 +48,7 @@
     (let [stopper (chan)]
       (go-loop []
         (alt!
-          new-tasks ([task ch]
+          new-tasks ([task _]
                      (create-task component task)
                      (recur))
           (timeout interval) ([_ _]
@@ -36,34 +57,11 @@
           stopper :stopped))
       (assoc component
              :stopper stopper
+             :api-url api-url
              :callback-url callback-url)))
   (stop [component]
     (when stopper (put! stopper :please-stop))
-    component)
-
-  Tasks
-  (create-task [this {:keys [args id guid dir domain docker-image env path result-file]}]
-    (let [task {:domain domain
-                :task_guid guid
-                :log_guid guid
-                :stack "lucid64"
-                :privileged false
-                :rootfs docker-image
-                :action {:run {:path path
-                               :args (clojure.string/split args #" ")}}
-                :completion_callback_url (:callback-url this)
-                :env (format-env env)
-                :dir dir
-                :result_file result-file
-                :disk_mb 1000
-                :memory_mb 1000}]
-      (http/POST (str api-url "/tasks") task)))
-
-  (remote-tasks [this]
-    (let [[error, result] (http/GET (str api-url "/tasks"))]
-      (if error
-        (println error)
-        result))))
+    component))
 
 (defn new-diego [new-tasks processing-tasks interval api-url callback-url]
   (map->Diego {:new-tasks new-tasks
