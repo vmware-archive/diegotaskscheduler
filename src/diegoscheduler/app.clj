@@ -8,7 +8,7 @@
 (defn- resolve-task [m task]
   (update-in m [:resolved] conj task))
 
-(defrecord App [new-tasks processing-tasks finished-tasks client-pushes
+(defrecord App [processing-tasks finished-tasks client-pushes
                 stopper]
   component/Lifecycle
   (start [component]
