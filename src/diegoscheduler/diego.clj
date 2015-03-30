@@ -42,7 +42,9 @@
       (println error)
       result)))
 
-(defrecord Diego [new-tasks processing-tasks stopper schedule api-url callback-url]
+(defrecord Diego [new-tasks processing-tasks schedule
+                  api-url callback-url
+                  stopper]
   component/Lifecycle
   (start [component]
     (let [stopper (chan)]
@@ -55,15 +57,13 @@
                     (>! processing-tasks {:processing (remote-tasks component)})
                     (recur))
           stopper :stopped))
-      (assoc component
-             :stopper stopper
-             :api-url api-url
-             :callback-url callback-url)))
+      (assoc component :stopper stopper)))
   (stop [component]
     (when stopper (put! stopper :please-stop))
     component))
 
-(defn new-diego [new-tasks processing-tasks schedule api-url callback-url]
+(defn new-diego [new-tasks processing-tasks schedule
+                 api-url callback-url]
   (map->Diego {:new-tasks new-tasks
                :processing-tasks processing-tasks
                :schedule schedule
