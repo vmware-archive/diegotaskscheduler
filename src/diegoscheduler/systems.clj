@@ -24,7 +24,7 @@
      :diego (new-diego new-tasks processing-tasks schedule
                        getfn postfn
                        callback-url)
-     :app (new-app new-tasks processing-tasks finished-tasks client-pushes)
+     :app (new-app processing-tasks finished-tasks retry-tasks client-pushes)
      :web (new-web-server new-tasks finished-tasks client-pushes port))))
 
 (defn -main []

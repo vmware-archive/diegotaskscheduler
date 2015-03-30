@@ -1,6 +1,6 @@
 (ns test.diegoscheduler.app-test
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [chan >!! <!!]]
+            [clojure.core.async :refer [chan >!! <!! sliding-buffer timeout]]
             [diegoscheduler.app :refer :all]
             [clojure.test :refer :all]))
 
@@ -14,11 +14,12 @@
   (testing "regular fails get added to the resolved collection"
     (is (= [{:some :task}]
            (let [finished-tasks (chan)
-                 app (new-app (chan) (chan) finished-tasks (chan))]
+                 app (new-app (chan) finished-tasks (chan) (chan))]
              (run app
-                   (fn [running-app]
-                     (>!! finished-tasks {:some :task})
-                     (get-in (deref (:state running-app))
-                             [:tasks :resolved])))))))
+               (fn [running-app]
+                 (>!! finished-tasks {:some :task})
+                 (<!! (timeout 100))
+                 (get-in (deref (:state running-app))
+                         [:tasks :resolved])))))))
 
   (testing "capacity fails get retried with a prepended guid"))

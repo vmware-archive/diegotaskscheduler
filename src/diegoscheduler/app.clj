@@ -35,8 +35,7 @@
     (when stopper (put! stopper :please-stop))
     component))
 
-(defn new-app [new-tasks processing-tasks finished-tasks client-pushes]
-  (map->App {:new-tasks new-tasks
-             :processing-tasks processing-tasks
+(defn new-app [processing-tasks finished-tasks retry-tasks client-pushes]
+  (map->App {:processing-tasks processing-tasks
              :finished-tasks finished-tasks
              :client-pushes client-pushes}))
