@@ -15,8 +15,8 @@
   (testing "valid task gets sent off"
     (is (= ["foo" "bar"]
            (let [new-tasks (chan)
-                 results (chan)
-                 postfn (fn [m] (>!! results m))
+                 post-args (chan)
+                 postfn (fn [m] (>!! post-args m))
                  diego (new-diego new-tasks (chan) (chan) (fn [])
                                   postfn "http://bar.com")]
              (wrap diego
@@ -30,4 +30,4 @@
                                      :env "FOO=BAR"
                                      :path "/path/to/exec"
                                      :result-file "/tmp/result"})
-                     (-> (<!! results) :action :run :args))))))))
+                     (-> (<!! post-args) :action :run :args))))))))

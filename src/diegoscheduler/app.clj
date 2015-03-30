@@ -20,17 +20,17 @@
           (>! new-tasks message)))
       (recur))))
 
-(defn create-ws-handler [new-tasks task-updates-for-client]
-  (log (str "New WS chan: " task-updates-for-client))
+(defn create-ws-handler [new-tasks client-pushes]
+  (log (str "New WS chan: " client-pushes))
   (fn [{web-client :ws-channel}]
     (handle-new-tasks new-tasks web-client)
-    (pipe task-updates-for-client web-client)))
+    (pipe client-pushes web-client)))
 
 (defn resolve-task [m task]
   (update-in m [:resolved] conj task))
 
-(defn create-routes [state new-tasks task-updates-for-client]
-  (let [updates-mult (mult task-updates-for-client)]
+(defn create-routes [state new-tasks client-pushes]
+  (let [updates-mult (mult client-pushes)]
     (routes
      (GET "/" [] (resource-response "index.html" {:root "public"}))
      (GET "/ws" []
@@ -56,13 +56,13 @@
   (start [component]
     (log "Starting new app")
     (let [state (atom {:tasks {:resolved [] :processing []}})
-          task-updates-for-client (chan)
-          routes (create-routes state new-tasks task-updates-for-client)]
+          client-pushes (chan)
+          routes (create-routes state new-tasks client-pushes)]
       (go-loop []
         (when-let [{:keys [processing]} (<! processing-tasks)]
-          (>! task-updates-for-client (swap! state
-                                             update-in [:tasks]
-                                             assoc :processing processing))
+          (>! client-pushes (swap! state
+                                   update-in [:tasks]
+                                   assoc :processing processing))
           (recur)))
       (assoc component
              :handler routes
