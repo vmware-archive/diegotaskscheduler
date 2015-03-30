@@ -1,6 +1,6 @@
 (ns user
   (:require [reloaded.repl :refer [system init start stop go reset set-init!]]
-            [clojure.core.async :refer [put! chan buffer >!! <!!]]
+            [clojure.core.async :refer [put! chan buffer sliding-buffer >!! <!!]]
             [diegoscheduler.systems :refer [main-system]]
             [clojure.tools.namespace.repl :refer [refresh clear set-refresh-dirs]]
             [org.httpkit.server :as http-kit]
