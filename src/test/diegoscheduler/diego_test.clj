@@ -4,12 +4,11 @@
             [diegoscheduler.diego :refer :all]
             [clojure.test :refer :all]))
 
-(defn- wrap [diego f]
+(defn- run [com f]
   (try
-    (component/start diego)
-    (f)
+    (f (component/start com))
     (finally
-      (component/stop diego))))
+      (component/stop com))))
 
 (deftest task-creation
   (testing "valid task gets sent off"
@@ -19,8 +18,8 @@
                  postfn (fn [m] (>!! post-args m))
                  diego (new-diego new-tasks (chan) (chan) (fn [])
                                   postfn "http://bar.com")]
-             (wrap diego
-                   (fn []
+             (run diego
+                   (fn [_]
                      (>!! new-tasks {:args "foo bar"
                                      :id "myid"
                                      :guid "myguid"

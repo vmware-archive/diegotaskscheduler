@@ -8,11 +8,13 @@
 (defn- resolve-task [m task]
   (update-in m [:resolved] conj task))
 
-(defrecord App [new-tasks processing-tasks finished-tasks client-pushes]
+(defrecord App [new-tasks processing-tasks finished-tasks client-pushes
+                stopper]
   component/Lifecycle
   (start [component]
     (log "Starting new app")
-    (let [state (atom {:tasks {:resolved [] :processing []}})]
+    (let [stopper (chan)
+          state (atom {:tasks {:resolved [] :processing []}})]
       (go-loop []
         (alt!
           processing-tasks ([tasks _]
@@ -24,9 +26,13 @@
                           (swap! state
                                  update-in [:tasks]
                                  resolve-task task)
-                          (recur))))
-      (assoc component :state state)))
+                          (recur))
+          stopper :stopped))
+      (assoc component
+             :state state
+             :stopper stopper)))
   (stop [component]
+    (when stopper (put! stopper :please-stop))
     component))
 
 (defn new-app [new-tasks processing-tasks finished-tasks client-pushes]
