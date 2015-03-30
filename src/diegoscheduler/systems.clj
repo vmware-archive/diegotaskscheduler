@@ -16,7 +16,7 @@
         processing-tasks (chan 1 (map :processing))
         finished-tasks (chan)
         client-pushes (chan)
-        schedule (timeout update-interval)
+        schedule (fn [] (timeout update-interval))
         tasks-url (str api-url "/tasks")
         getfn (fn [] (http/GET tasks-url))
         postfn (fn [task] (http/POST tasks-url task))]

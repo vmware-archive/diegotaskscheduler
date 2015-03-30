@@ -53,9 +53,9 @@
           new-tasks ([task _]
                      (create-task component task)
                      (recur))
-          schedule ([_ _]
-                    (>! processing-tasks {:processing (remote-tasks component)})
-                    (recur))
+          (schedule) ([_ _]
+                      (>! processing-tasks {:processing (remote-tasks component)})
+                      (recur))
           stopper :stopped))
       (assoc component :stopper stopper)))
   (stop [component]
