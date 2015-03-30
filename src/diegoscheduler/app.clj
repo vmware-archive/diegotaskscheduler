@@ -27,7 +27,7 @@
     (pipe task-updates-for-client web-client)))
 
 (defn resolve-task [m task]
-  (-> m (update-in [:resolved] conj task)))
+  (update-in m [:resolved] conj task))
 
 (defn create-routes [state new-tasks task-updates-for-client]
   (let [updates-mult (mult task-updates-for-client)]
