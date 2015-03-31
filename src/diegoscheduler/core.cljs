@@ -8,17 +8,20 @@
 
 (enable-console-print!)
 
-(def new-task (atom {:id 1
-                     :guid "task1"
-                     :domain (-> (js/Math.random)
-                                 (.toString 36)
-                                 (.slice 2))
-                     :docker-image "docker:///camelpunch/s3copier"
-                     :path "/app/run.sh"
-                     :dir "/app"
-                     :args "lattices3cp-source/commonpeople.jpg lattices3cp-destination/acommoncopy.jpg"
-                     :result-file "/tmp/result_file"
-                     :env "AWS_ACCESS_KEY_ID=blah AWS_SECRET_ACCESS_KEY=likeidtellyouplz"}))
+(defn guid []
+  (-> (js/Math.random) (.toString 36) (.slice 2)))
+
+(def new-task
+  (let [new-guid (guid)]
+    (atom {:guid new-guid
+           :domain "task-scheduler"
+           :docker-image "docker:///camelpunch/s3copier"
+           :path "/app/run.sh"
+           :dir "/app"
+           :args "lattices3cp-source/commonpeople.jpg lattices3cp-destination/acommoncopy.jpg"
+           :result-file "/tmp/result_file"
+           :env "AWS_ACCESS_KEY_ID=blah AWS_SECRET_ACCESS_KEY=likeidtellyouplz"})))
+
 (defonce tasks (atom {:pending []
                       :running []
                       :successful []
@@ -86,23 +89,19 @@
                 (handle-outgoing ws-channel)
                 (handle-incoming ws-channel)))))))
 
-(defn guid [t]
-  (str "task" (:id t)))
-
-(defn inc-id [m]
-  (let [with-updated-id (update-in m [:id] inc)]
-    (assoc with-updated-id :guid (guid with-updated-id))))
+(defn set-guid [m]
+  (assoc m :guid (guid)))
 
 (defn upload-task []
   (put! uploads @new-task)
-  (swap! new-task inc-id))
+  (swap! new-task set-guid))
 
 (defn event-update [a attr]
   (fn [e]
     (swap! a #(assoc % attr (-> e .-target .-value)))))
 
 (defn input [a key label]
-  (let [id (str "task-" key)]
+  (let [id (str "task-" (name key))]
     [:p.form-control
      [:label.lbl {:for id} label]
      [:input.inpt {:id id
@@ -154,7 +153,7 @@
       [:input#task-guid.inpt {:name "task_guid"
                               :disabled "disabled"
                               :size 9,
-                              :value (guid @new-task)}]]
+                              :value (@new-task :guid)}]]
      (input new-task :domain "Domain")
      (input new-task :docker-image "Docker image")
      (input new-task :path "Path to executable")
@@ -162,8 +161,7 @@
      (input new-task :dir "Directory")
      (input new-task :env "ENV")
      (input new-task :result-file "Result file")
-     [:button.btn {:name (str "task" (:id @new-task))
-                   :on-click upload-task} "Add " (guid @new-task)]]]
+     [:button.btn {:on-click upload-task} "Add Task"]]]
    (section :pending "Pending" {:task_guid "GUID"
                                 :domain "Domain"
                                 :rootfs "Docker image"
