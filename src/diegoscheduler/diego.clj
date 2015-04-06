@@ -13,11 +13,6 @@
   (map (fn [[_ name value]] {:name name :value value})
        (re-seq #"(\S+)=(\S+)" (or s ""))))
 
-(comment
-  (format-env "a=b c=d e=f")
-  (format-env nil)
-  )
-
 (defn create-task [{:keys [domain guid rootfs path
                            args callback-url
                            env dir result-file]}]
