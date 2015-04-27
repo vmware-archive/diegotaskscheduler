@@ -37,8 +37,10 @@
   :cljsbuild
   {:builds {:dev {:source-paths ["src" "dev_src"]
                   :compiler {:output-to "resources/public/js/compiled/diegoscheduler.js"
+                             :output-dir "resources/public/js/compiled/out"
                              :optimizations :none
                              :main diegoscheduler.dev
+                             :asset-path "js/compiled/out"
                              :source-map true
                              :source-map-timestamp true
                              :cache-analysis true}}
