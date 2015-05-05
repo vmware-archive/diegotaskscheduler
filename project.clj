@@ -20,6 +20,8 @@
             [lein-figwheel "0.2.5-SNAPSHOT"]
             [lein-environ "1.0.0"]]
 
+  :hooks [leiningen.cljsbuild]
+
   :source-paths ["src"]
   :test-paths ["src/test/diegoscheduler"]
   :main diegoscheduler.systems
