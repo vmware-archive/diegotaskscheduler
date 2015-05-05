@@ -15,7 +15,9 @@ brew install leiningen
 
 From the project directory, run the following to compile a JAR:
 
+```sh
 lein uberjar
+```
 
 The first time you run this, Leiningen will download Clojure, ClojureScript and all the dependencies required of this project. It may take some time.
 
