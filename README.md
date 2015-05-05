@@ -4,7 +4,7 @@ This is a prototype task scheduling system that allow you to send docker images 
 
 ## Installation
 
-As this is a [Clojure](http://clojure.org/) / [Leiningen](http://leiningen.org/) project, you need Leiningen installed. This can be achieved on a Mac with homebrew like so:
+As this is a [Clojure](http://clojure.org/) / [Leiningen](http://leiningen.org/) project, you need Leiningen installed. This can be achieved on a Mac with [Homebrew](http://brew.sh/) like so:
 
 ```sh
 brew update
