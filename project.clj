@@ -21,6 +21,7 @@
 
   :source-paths ["src"]
   :test-paths ["src/test/diegoscheduler"]
+  :main diegoscheduler.systems
 
   :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.8"]
                                   [figwheel "0.2.5"]]
