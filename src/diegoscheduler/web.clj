@@ -27,7 +27,7 @@
                                    :env env
                                    :result-file result-file
                                    :callback-url callback-url})]
-          (log "New task")
+          (log (str "New task with guid " guid))
           (>! new-tasks task)))
       (recur))))
 
@@ -64,6 +64,7 @@
                       server]
   component/Lifecycle
   (start [component]
+    (log (str "Using port " port))
     (let [routes (create-routes new-tasks finished-tasks
                                 client-pushes callback-url)
           server (run-server routes {:port port})]
