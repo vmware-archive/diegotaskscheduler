@@ -6,7 +6,8 @@
             [ring.util.response :refer [resource-response]]
             [org.httpkit.server :refer [run-server]]
             [chord.http-kit :refer [wrap-websocket-handler]]
-            [diegoscheduler.diego :as d]))
+            [diegoscheduler.diego :as d]
+            [diegoscheduler.pages :as pages]))
 
 (defn- log [msg]
   (println msg))
@@ -37,10 +38,10 @@
     (handle-new-tasks new-tasks web-client callback-url)
     (pipe client-pushes web-client)))
 
-(defn- create-routes [new-tasks finished-tasks client-pushes callback-url]
+(defn- create-routes [new-tasks finished-tasks client-pushes callback-url js-url]
   (let [updates-mult (mult client-pushes)]
     (routes
-     (GET "/" [] (resource-response "index.html" {:root "public"}))
+     (GET "/" [] {:status 200 :body (pages/index js-url)})
      (GET "/ws" []
           (log "Got /ws request")
           (-> (create-ws-handler new-tasks
@@ -61,12 +62,13 @@
 
 (defrecord WebServer [new-tasks finished-tasks client-pushes
                       port callback-url
-                      server]
+                      server
+                      js-url]
   component/Lifecycle
   (start [component]
     (log (str "Using port " port))
     (let [routes (create-routes new-tasks finished-tasks
-                                client-pushes callback-url)
+                                client-pushes callback-url js-url)
           server (run-server routes {:port port})]
       (assoc component :server server)))
   (stop [component]
@@ -74,9 +76,10 @@
       (server)
       component)))
 
-(defn new-web-server [new-tasks finished-tasks client-pushes port callback-url]
+(defn new-web-server [new-tasks finished-tasks client-pushes port callback-url js-url]
   (map->WebServer {:new-tasks new-tasks
                    :finished-tasks finished-tasks
                    :client-pushes client-pushes
                    :port port
-                   :callback-url callback-url}))
+                   :callback-url callback-url
+                   :js-url js-url}))

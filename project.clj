@@ -13,7 +13,8 @@
                  [jarohen/chord "0.6.0"]
                  [org.clojure/clojurescript "0.0-3123"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [reagent "0.5.0-alpha3"]]
+                 [reagent "0.5.0-alpha3"]
+                 [hiccup "1.0.5"]]
 
   :plugins [[lein-cljsbuild "1.0.4"]
             [lein-figwheel "0.2.5-SNAPSHOT"]
@@ -30,14 +31,18 @@
                    :plugins [[cider/cider-nrepl "0.8.2"]
                              [com.cemerick/austin "0.1.6"]]
                    :env {:port 8081
-                         :api-url "http://192.168.11.11:8888/v1"}}
+                         :api-url "http://192.168.11.11:8888/v1"
+                         :js-url "js/compiled/diegoscheduler-debug.js"}}
              :uberjar {:main diegoscheduler.systems
                        :aot :all
-                       :source-paths ["src"]}}
+                       :source-paths ["src"]
+                       :env {:js-url "js/compiled/diegoscheduler.js"}}}
+
+  :jar-exclusions [#".*-debug.js" #".*public/js/compiled/out.*"]
 
   :cljsbuild
   {:builds {:dev {:source-paths ["src" "dev_src"]
-                  :compiler {:output-to "resources/public/js/compiled/diegoscheduler.js"
+                  :compiler {:output-to "resources/public/js/compiled/diegoscheduler-debug.js"
                              :output-dir "resources/public/js/compiled/out"
                              :optimizations :none
                              :main diegoscheduler.dev

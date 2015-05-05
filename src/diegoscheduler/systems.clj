@@ -10,7 +10,7 @@
 
 (def ^:private update-interval 500)
 
-(defn main-system [port-str api-url callback-url]
+(defn main-system [port-str api-url callback-url js-url]
   (let [port (Integer. port-str)
         new-tasks (chan)
         processing-tasks (chan 1 (map :processing))
@@ -31,12 +31,17 @@
                        getfn postfn)
      :app (new-app processing-tasks finished-tasks retry-tasks client-pushes
                    retry-delay)
-     :web (new-web-server new-tasks finished-tasks client-pushes port callback-url))))
+     :web (new-web-server new-tasks
+                          finished-tasks
+                          client-pushes
+                          port
+                          callback-url
+                          js-url))))
 
 (defn -main []
-  (let [{:keys [port api-url callback-url]} env]
+  (let [{:keys [port api-url callback-url js-url]} env]
     (if (and port api-url callback-url)
-      (component/start (main-system port api-url callback-url))
+      (component/start (main-system port api-url callback-url js-url))
       (do
         (.println *err* "ERROR: must set PORT, API_URL and CALLBACK_URL.")
         (System/exit 1)))))
