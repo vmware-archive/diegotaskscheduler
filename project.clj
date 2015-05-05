@@ -14,7 +14,8 @@
                  [org.clojure/clojurescript "0.0-3123"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [reagent "0.5.0-alpha3"]
-                 [hiccup "1.0.5"]]
+                 [hiccup "1.0.5"]
+                 [figwheel "0.2.5"]]
 
   :plugins [[lein-cljsbuild "1.0.4"]
             [lein-figwheel "0.2.5-SNAPSHOT"]
@@ -26,8 +27,7 @@
   :test-paths ["src/test/diegoscheduler"]
   :main diegoscheduler.systems
 
-  :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.8"]
-                                  [figwheel "0.2.5"]]
+  :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.8"]]
                    :repl-options {:init-ns user}
                    :source-paths ["dev_src"]
                    :plugins [[cider/cider-nrepl "0.8.2"]
