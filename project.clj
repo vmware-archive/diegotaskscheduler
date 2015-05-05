@@ -43,7 +43,7 @@
   :jar-exclusions [#".*-debug.js" #".*public/js/compiled/out.*"]
 
   :cljsbuild
-  {:builds {:dev {:source-paths ["src" "dev_src"]
+  {:builds {:dev {:source-paths ["src" "dev_src/diegoscheduler"]
                   :compiler {:output-to "resources/public/js/compiled/diegoscheduler-debug.js"
                              :output-dir "resources/public/js/compiled/out"
                              :optimizations :none
