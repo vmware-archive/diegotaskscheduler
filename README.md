@@ -1,6 +1,6 @@
 # Diego Task Scheduler
 
-This is a prototype task scheduling system that allow you to send docker images hosted on e.g. [Docker Hub](https://hub.docker.com/) to a running instance of [Lattice](http://lattice.cf/).
+This is a prototype task scheduling system that allow you to send docker images hosted on e.g. [Docker Hub](https://hub.docker.com/) to a running instance of [Lattice](http://lattice.cf/), or anything running the [Diego Receptor API](https://github.com/cloudfoundry-incubator/receptor/blob/master/doc/README.md), for that matter.
 
 ## Installation
 
