@@ -1,0 +1,6 @@
+---
+applications:
+- name: taskscheduler
+  memory: 1G
+  host: taskscheduler
+  path: target/diegoscheduler-0.1.0-SNAPSHOT-standalone.jar
