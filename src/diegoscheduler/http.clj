@@ -2,9 +2,9 @@
   (:require [clj-http.client :as client]
             [slingshot.slingshot :refer [try+]]))
 
-(defn- wrap [fn]
+(defn- wrap [f]
   (try+
-   (fn)
+   (f)
    (catch java.net.UnknownHostException _
      ["Unknown Host" nil])
    (catch java.net.ConnectException _
