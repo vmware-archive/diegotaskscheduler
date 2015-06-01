@@ -37,7 +37,12 @@
                          :api-url "http://192.168.11.11:8888/v1"
                          :js-url "js/compiled/diegoscheduler-debug.js"}}
              :uberjar {:main diegoscheduler.systems
-                       :aot :all
+                       :aot [diegoscheduler.app
+                             diegoscheduler.diego
+                             diegoscheduler.http
+                             diegoscheduler.pages
+                             diegoscheduler.systems
+                             diegoscheduler.web]
                        :source-paths ["src"]}}
 
   :jar-exclusions [#".*-debug.js" #".*public/js/compiled/out.*"]
