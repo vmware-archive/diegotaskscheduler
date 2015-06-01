@@ -39,4 +39,4 @@
                              diegoscheduler.systems
                              diegoscheduler.web]}}
 
-  :jar-exclusions [#".*public/js/compiled/out.*"])
+  :jar-exclusions [#".*public/js/((?!application\.js).)*$"])
