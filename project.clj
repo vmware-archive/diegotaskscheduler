@@ -22,7 +22,7 @@
   :hooks [leiningen.cljsbuild]
 
   :source-paths ["src"]
-  :test-paths ["src/test/diegoscheduler"]
+  :test-paths ["test"]
   :main diegoscheduler.systems
 
   :env {:js-url "js/compiled/diegoscheduler.js"}
