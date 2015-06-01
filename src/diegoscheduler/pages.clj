@@ -5,7 +5,7 @@
   (for [uri uris]
     [:link {:href uri :rel "stylesheet" :type "text/css"}]))
 
-(defn index [js-url]
+(defn index []
   (html5
    [:head
     (styles "https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.css"
@@ -13,4 +13,4 @@
    [:body
     [:div#app
      [:h2 "Loading..."]]
-    [:script {:src js-url :type "text/javascript"}]]))
+    [:script {:src "/js/application.js" :type "text/javascript"}]]))

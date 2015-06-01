@@ -37,8 +37,7 @@
 
 (set-init! #(main-system (:port env)
                          (:api-url env)
-                         (str "http://" local-ip ":" (:port env) "/taskfinished")
-                         (:js-url env)))
+                         (str "http://" local-ip ":" (:port env) "/taskfinished")))
 
 (def task-id (atom 1))
 

@@ -8,7 +8,7 @@
                  [org.danielsz/system "0.1.4"]
                  [environ "1.0.0"]
                  [http-kit "2.1.18"]
-                 [clj-http "1.0.1" :exclusions [org.clojure/tools.reader]]
+                 [clj-http "1.1.2" :exclusions [org.clojure/tools.reader]]
                  [compojure "1.3.4"]
                  [jarohen/chord "0.6.0" :exclusions [org.clojure/tools.reader]]
                  [org.clojure/clojurescript "0.0-3308"]

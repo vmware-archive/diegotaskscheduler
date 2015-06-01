@@ -38,10 +38,10 @@
     (handle-new-tasks new-tasks web-client callback-url)
     (pipe client-pushes web-client)))
 
-(defn- create-routes [new-tasks finished-tasks client-pushes callback-url js-url]
+(defn- create-routes [new-tasks finished-tasks client-pushes callback-url]
   (let [updates-mult (mult client-pushes)]
     (routes
-     (GET "/" [] {:status 200 :body (pages/index js-url)})
+     (GET "/" [] {:status 200 :body (pages/index)})
      (GET "/ws" []
           (log "Got /ws request")
           (-> (create-ws-handler new-tasks
@@ -62,13 +62,12 @@
 
 (defrecord WebServer [new-tasks finished-tasks client-pushes
                       port callback-url
-                      server
-                      js-url]
+                      server]
   component/Lifecycle
   (start [component]
     (log (str "Using port " port))
     (let [routes (create-routes new-tasks finished-tasks
-                                client-pushes callback-url js-url)
+                                client-pushes callback-url)
           server (run-server routes {:port port})]
       (assoc component :server server)))
   (stop [component]
@@ -76,10 +75,9 @@
       (server)
       component)))
 
-(defn new-web-server [new-tasks finished-tasks client-pushes port callback-url js-url]
+(defn new-web-server [new-tasks finished-tasks client-pushes port callback-url]
   (map->WebServer {:new-tasks new-tasks
                    :finished-tasks finished-tasks
                    :client-pushes client-pushes
                    :port port
-                   :callback-url callback-url
-                   :js-url js-url}))
+                   :callback-url callback-url}))
