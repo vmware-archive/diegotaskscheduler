@@ -29,7 +29,6 @@
   (stop)
   (reset)
   (:web system)
-  (:channel (:updater system))
 
   (diego/create-task (:diego system) {:id (swap! task-id inc)
                                       :guid (str "foo" @task-id)
