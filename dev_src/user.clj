@@ -5,8 +5,29 @@
             [clojure.tools.namespace.repl :refer [refresh clear set-refresh-dirs]]
             [org.httpkit.server :as http-kit]
             [diegoscheduler.diego :as diego]
-            [environ.core :refer [env]])
+            [environ.core :refer [env]]
+            [leiningen.clean :refer [delete-file-recursively]]
+            [cljs.build.api :as js])
   (:import [java.net InetAddress]))
+
+(def js-dir "resources/public/js")
+
+(defn watch []
+  (delete-file-recursively js-dir :silently)
+  (js/watch "src"
+            {:main 'diegoscheduler.core
+             :output-to (str js-dir "/application.js")
+             :output-dir js-dir
+             :asset-path "js"}))
+
+(defn production-build []
+  (delete-file-recursively js-dir :silently)
+  (js/build "src"
+            {:main 'diegoscheduler.core
+             :output-to (str js-dir "/application.js")
+             :output-dir js-dir
+             :asset-path "js"
+             :optimizations :advanced}))
 
 (def local-ip
   (->> (InetAddress/getLocalHost)
@@ -28,6 +49,10 @@
   (go)
   (stop)
   (reset)
+
+  (watch)
+  (production-build)
+
   (:web system)
 
   (diego/create-task (:diego system) {:id (swap! task-id inc)
