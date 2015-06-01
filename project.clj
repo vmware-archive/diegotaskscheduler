@@ -30,7 +30,7 @@
   :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.10"]
                                   [org.clojure/tools.namespace "0.2.10"]]
                    :repl-options {:init-ns user}
-                   :source-paths ["dev_src" "src/test"]
+                   :source-paths ["dev_src"]
                    :plugins [[cider/cider-nrepl "0.9.0-SNAPSHOT"]
                              [com.cemerick/austin "0.1.6"]]
                    :env {:port 8081
@@ -42,13 +42,12 @@
                              diegoscheduler.http
                              diegoscheduler.pages
                              diegoscheduler.systems
-                             diegoscheduler.web]
-                       :source-paths ["src"]}}
+                             diegoscheduler.web]}}
 
   :jar-exclusions [#".*-debug.js" #".*public/js/compiled/out.*"]
 
   :cljsbuild
-  {:builds {:dev {:source-paths ["src" "dev_src/diegoscheduler"]
+  {:builds {:dev {:source-paths ["src"]
                   :compiler {:output-to "resources/public/js/compiled/diegoscheduler-debug.js"
                              :output-dir "resources/public/js/compiled/out"
                              :optimizations :none
