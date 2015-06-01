@@ -1,4 +1,4 @@
-(ns test.diegoscheduler.diego-test
+(ns diegoscheduler.diego-test
   (:require [clojure.core.async :refer [chan >!! <!!]]
             [com.stuartsierra.component :as component]
             [diegoscheduler.diego :refer :all]

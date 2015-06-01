@@ -1,4 +1,4 @@
-(ns test.diegoscheduler.http-test
+(ns diegoscheduler.http-test
   (:require [diegoscheduler.http :refer :all]
             [clojure.test :refer :all]
             [clj-http.client :as http]))

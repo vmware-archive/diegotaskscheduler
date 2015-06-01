@@ -1,4 +1,4 @@
-(ns test.diegoscheduler.app-test
+(ns diegoscheduler.app-test
   (:require [com.stuartsierra.component :as component]
             [clojure.core.async :refer [chan >!! <!! sliding-buffer timeout]]
             [diegoscheduler.app :refer :all]
