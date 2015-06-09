@@ -13,21 +13,34 @@ brew install leiningen
 
 ## Running locally
 
-From the project directory, run the following to compile a JAR:
+From the project directory, run the following to compile JavaScript:
+
+```sh
+lein repl
+```
+
+The first time you run this, Leiningen will download Clojure, ClojureScript and all the dependencies required of this project. It may take some time. When you get a prompt:
+
+```clojure
+(production-build)
+(exit)
+```
+
+Ignore any warnings. I'll get around to fixing those. Note you can also do (development-build). See dev_src/user.clj for build differences.
+
+Then run the following to compile a JAR:
 
 ```sh
 lein uberjar
 ```
-
-The first time you run this, Leiningen will download Clojure, ClojureScript and all the dependencies required of this project. It may take some time.
 
 Now run the following to start the server, replacing $YOUR_IP_HERE with the IP of your machine on your local network. This is needed to allow Lattice to keep Diego Scheduler updated about finished tasks.
 
 ```sh
 PORT=8080 \
 API_URL=http://192.168.11.11:8888/v1 \
-CALLBACK_URL="http://$YOUR_IP_HERE:8080/taskfinished" \
-java -jar target/diegoscheduler-0.1.0-SNAPSHOT-standalone.jar
+WS_URL=ws://localhost:8080/ws \
+java -jar target/diegoscheduler-0.2.0-SNAPSHOT-standalone.jar
 ```
 
 Open a browser at [http://localhost:8080/](http://localhost:8080/). You should see a rudimentary interface for creating a Task. The defaults will result in a "Successful" docker image being downloaded and run. It will have error output in the Result column. This is because AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY have bogus values. You could replace these bogus values to have the s3copier task carry out its business properly.
