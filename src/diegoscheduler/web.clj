@@ -38,10 +38,10 @@
     (handle-new-tasks new-tasks web-client callback-url)
     (pipe client-pushes web-client)))
 
-(defn- create-routes [new-tasks finished-tasks client-pushes callback-url]
+(defn- create-routes [new-tasks finished-tasks client-pushes callback-url ws-url]
   (let [updates-mult (mult client-pushes)]
     (routes
-     (GET "/" [] {:status 200 :body (pages/index)})
+     (GET "/" [] {:status 200 :body (pages/index {:ws-url ws-url})})
      (GET "/ws" []
           (log "Got /ws request")
           (-> (create-ws-handler new-tasks
@@ -61,13 +61,13 @@
      (route/not-found "<h1>Page not found</h1>"))))
 
 (defrecord WebServer [new-tasks finished-tasks client-pushes
-                      port callback-url
+                      port callback-url ws-url
                       server]
   component/Lifecycle
   (start [component]
     (log (str "Using port " port))
     (let [routes (create-routes new-tasks finished-tasks
-                                client-pushes callback-url)
+                                client-pushes callback-url ws-url)
           server (run-server routes {:port port})]
       (assoc component :server server)))
   (stop [component]
@@ -75,9 +75,10 @@
       (server)
       component)))
 
-(defn new-web-server [new-tasks finished-tasks client-pushes port callback-url]
+(defn new-web-server [new-tasks finished-tasks client-pushes port callback-url ws-url]
   (map->WebServer {:new-tasks new-tasks
                    :finished-tasks finished-tasks
                    :client-pushes client-pushes
                    :port port
-                   :callback-url callback-url}))
+                   :callback-url callback-url
+                   :ws-url ws-url}))

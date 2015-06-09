@@ -30,7 +30,8 @@
                    :plugins [[cider/cider-nrepl "0.9.0-SNAPSHOT"]
                              [com.cemerick/austin "0.1.6"]]
                    :env {:port 8081
-                         :api-url "http://192.168.11.11:8888/v1"}}
+                         :api-url "http://192.168.11.11:8888/v1"
+                         :ws-url "ws://localhost:8081/ws"}}
              :uberjar {:main diegoscheduler.systems
                        :aot [diegoscheduler.app
                              diegoscheduler.diego

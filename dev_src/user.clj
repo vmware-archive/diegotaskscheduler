@@ -27,6 +27,7 @@
              :output-to (str js-dir "/application.js")
              :output-dir js-dir
              :asset-path "js"
+             :externs ["dev_src/externs.js"]
              :optimizations :advanced}))
 
 (def local-ip
@@ -37,7 +38,8 @@
 
 (set-init! #(main-system (:port env)
                          (:api-url env)
-                         (str "http://" local-ip ":" (:port env) "/taskfinished")))
+                         (str "http://" local-ip ":" (:port env) "/taskfinished")
+                         "ws://localhost:8081/ws"))
 
 (def task-id (atom 1))
 
