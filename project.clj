@@ -39,4 +39,8 @@
                              diegoscheduler.systems
                              diegoscheduler.web]}}
 
-  :jar-exclusions [#".*public/js/((?!application\.js).)*$"])
+  :uberjar-exclusions [#"^goog/.*$"
+                       #"^com/google/javascript/.*"
+                       #"^public/js/chord/.*"
+                       #"^public/js/cljs/.*"
+                       #"^public/js/clojure/.*"])
