@@ -10,38 +10,28 @@
 
 (def ^:private update-interval 500)
 
-(defn main-system [port-str api-url callback-url ws-url]
+(defn main-system [port-str api-url ws-url]
   (let [port (Integer. port-str)
         new-tasks (chan)
-        processing-tasks (chan 1 (map :processing))
-        finished-tasks (chan)
-        retry-tasks (chan)
-        tasks-for-diego (chan)
-        diego-mix (mix tasks-for-diego)
+        tasks-from-diego (chan)
         client-pushes (chan)
         schedule (fn [] (timeout update-interval))
         tasks-url (str api-url "/tasks")
         getfn (fn [] (http/GET tasks-url))
-        postfn (fn [task] (http/POST tasks-url task))
-        retry-delay 10000]
-    (admix diego-mix new-tasks)
-    (admix diego-mix retry-tasks)
+        postfn (fn [task] (http/POST tasks-url task))]
     (component/system-map
-     :diego (new-diego tasks-for-diego processing-tasks schedule
+     :diego (new-diego new-tasks tasks-from-diego schedule
                        getfn postfn)
-     :app (new-app processing-tasks finished-tasks retry-tasks client-pushes
-                   retry-delay)
+     :app (new-app tasks-from-diego client-pushes)
      :web (new-web-server new-tasks
-                          finished-tasks
                           client-pushes
                           port
-                          callback-url
                           ws-url))))
 
 (defn -main []
-  (let [{:keys [port api-url callback-url ws-url]} env]
-    (if (and port api-url callback-url ws-url)
-      (component/start (main-system port api-url callback-url ws-url))
+  (let [{:keys [port api-url ws-url]} env]
+    (if (and port api-url ws-url)
+      (component/start (main-system port api-url ws-url))
       (do
-        (.println *err* "ERROR: must set PORT, API_URL, CALLBACK_URL and WS_URL.")
+        (.println *err* "ERROR: must set PORT, API_URL and WS_URL.")
         (System/exit 1)))))

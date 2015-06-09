@@ -12,7 +12,7 @@
 (defn- log [msg]
   (println msg))
 
-(defn- handle-new-tasks [new-tasks web-client callback-url]
+(defn- handle-new-tasks [new-tasks web-client]
   (go-loop []
     (when-let [{:keys [message error] :as msg} (<! web-client)]
       (if error
@@ -26,48 +26,36 @@
                                    :path path
                                    :args args
                                    :env env
-                                   :result-file result-file
-                                   :callback-url callback-url})]
+                                   :result-file result-file})]
           (log (str "New task with guid " guid))
           (>! new-tasks task)))
       (recur))))
 
-(defn- create-ws-handler [new-tasks client-pushes callback-url]
+(defn- create-ws-handler [new-tasks client-pushes]
   (log (str "New WS chan: " client-pushes))
   (fn [{web-client :ws-channel}]
-    (handle-new-tasks new-tasks web-client callback-url)
+    (handle-new-tasks new-tasks web-client)
     (pipe client-pushes web-client)))
 
-(defn- create-routes [new-tasks finished-tasks client-pushes callback-url ws-url]
+(defn- create-routes [new-tasks client-pushes ws-url]
   (let [updates-mult (mult client-pushes)]
     (routes
      (GET "/" [] {:status 200 :body (pages/index {:ws-url ws-url})})
      (GET "/ws" []
           (log "Got /ws request")
           (-> (create-ws-handler new-tasks
-                                 (tap updates-mult (chan (dropping-buffer 1)))
-                                 callback-url)
+                                 (tap updates-mult (chan (dropping-buffer 1))))
               (wrap-websocket-handler)))
-     (POST "/taskfinished" {body :body}
-           (log "Task finished")
-           (try
-             (let [parsed-task (d/parse-task (slurp body))]
-               (put! finished-tasks parsed-task)
-               {:status 200})
-             (catch Exception e
-               (log (str "Exception: " e))
-               {:status 500})))
      (route/resources "/")
      (route/not-found "<h1>Page not found</h1>"))))
 
-(defrecord WebServer [new-tasks finished-tasks client-pushes
-                      port callback-url ws-url
+(defrecord WebServer [new-tasks client-pushes
+                      port ws-url
                       server]
   component/Lifecycle
   (start [component]
     (log (str "Using port " port))
-    (let [routes (create-routes new-tasks finished-tasks
-                                client-pushes callback-url ws-url)
+    (let [routes (create-routes new-tasks client-pushes ws-url)
           server (run-server routes {:port port})]
       (assoc component :server server)))
   (stop [component]
@@ -75,10 +63,8 @@
       (server)
       component)))
 
-(defn new-web-server [new-tasks finished-tasks client-pushes port callback-url ws-url]
+(defn new-web-server [new-tasks client-pushes port ws-url]
   (map->WebServer {:new-tasks new-tasks
-                   :finished-tasks finished-tasks
                    :client-pushes client-pushes
                    :port port
-                   :callback-url callback-url
                    :ws-url ws-url}))

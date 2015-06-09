@@ -12,9 +12,9 @@
 
 (def js-dir "resources/public/js")
 
-(defn watch []
+(defn development-build []
   (delete-file-recursively js-dir :silently)
-  (js/watch "src"
+  (js/build "src"
             {:main 'diegoscheduler.core
              :output-to (str js-dir "/application.js")
              :output-dir js-dir
@@ -38,7 +38,6 @@
 
 (set-init! #(main-system (:port env)
                          (:api-url env)
-                         (str "http://" local-ip ":" (:port env) "/taskfinished")
                          "ws://localhost:8081/ws"))
 
 (def task-id (atom 1))
@@ -51,26 +50,10 @@
   (stop)
   (reset)
 
-  (watch)
+  (development-build)
   (production-build)
 
   (:web system)
 
-  (diego/create-task (:diego system) {:id (swap! task-id inc)
-                                      :guid (str "foo" @task-id)
-                                      :domain "mydomainz"
-                                      :docker-image "docker:///camelpunch/env_writer"
-                                      :path "/usr/local/bin/env_writer.sh"
-                                      :args "foo /tmp/result"
-                                      :env "foo=bar"
-                                      :result-file "/tmp/result"})
-  (diego/create-task (:diego system) {:id (swap! task-id inc)
-                                      :guid (str "foo" @task-id)
-                                      :domain "mydomainz"
-                                      :docker-image "docker:///camelpunch/s3copier"
-                                      :path "/bin/echo"
-                                      :args "foo"
-                                      :env "foo=bar"
-                                      :result-file "/tmp/result"})
   (count (diego/remote-tasks (:diego system)))
   (map keys (into (sorted-map) (diego/remote-tasks))))

@@ -14,8 +14,7 @@
        (re-seq #"(\S+)=(\S+)" (or s ""))))
 
 (defn create-task [{:keys [domain guid rootfs path
-                           args callback-url
-                           env dir result-file]}]
+                           args env dir result-file]}]
   {:domain domain
    :task_guid guid
    :log_guid guid
@@ -24,7 +23,6 @@
    :rootfs rootfs
    :action {:run {:path path
                   :args (s/split args #" ")}}
-   :completion_callback_url callback-url
    :env (format-env env)
    :dir dir
    :result_file result-file
@@ -37,7 +35,7 @@
       (println error)
       result)))
 
-(defrecord Diego [new-tasks processing-tasks schedule
+(defrecord Diego [new-tasks tasks-from-diego schedule
                   getfn postfn
                   stopper]
   component/Lifecycle
@@ -49,18 +47,19 @@
                      (postfn task)
                      (recur))
           (schedule) ([_ _]
-                      (>! processing-tasks {:processing (remote-tasks component)})
-                      (recur))
+                      (let [tasks (remote-tasks component)]
+                        (>! tasks-from-diego {:tasks tasks})
+                        (recur)))
           stopper :stopped))
       (assoc component :stopper stopper)))
   (stop [component]
     (when stopper (put! stopper :please-stop))
     component))
 
-(defn new-diego [new-tasks processing-tasks schedule
+(defn new-diego [new-tasks tasks-from-diego schedule
                  getfn postfn]
   (map->Diego {:new-tasks new-tasks
-               :processing-tasks processing-tasks
+               :tasks-from-diego tasks-from-diego
                :schedule schedule
                :getfn getfn
                :postfn postfn}))

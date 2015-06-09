@@ -28,18 +28,17 @@
                       :failed []}))
 (def uploads (chan))
 
-(defn update-tasks [m new-tasks]
-  (let [resolved (:resolved new-tasks)
-        {failed true successful false} (group-by :failed resolved)]
+(defn update-tasks [m tasks-from-diego]
+  (let [{failed true not-failed false} (group-by :failed (:tasks tasks-from-diego))]
     (assoc m
       :failed failed
-      :successful successful
-      :pending (filter #(= "PENDING" (:state %)) (:processing new-tasks))
-      :running (filter #(= "RUNNING" (:state %)) (:processing new-tasks))
+      :successful (filter #(= "COMPLETED" (:state %)) not-failed)
+      :pending (filter #(= "PENDING" (:state %)) not-failed)
+      :running (filter #(= "RUNNING" (:state %)) not-failed)
       )))
 
-(defn handle-tasks [new-tasks]
-  (swap! tasks update-tasks new-tasks))
+(defn handle-tasks [tasks-from-diego]
+  (swap! tasks update-tasks tasks-from-diego))
 
 (defn log-handler [body]
   (js/console.log (clj->js body)))
@@ -157,12 +156,10 @@
      [:button.btn {:on-click upload-task} "Add Task"]]]
    (section :pending "Pending" {:task_guid "GUID"
                                 :domain "Domain"
-                                :rootfs "Docker image"
-                                :completion_callback_url "Callback URL"})
+                                :rootfs "Docker image"})
    (section :running "Running" {:task_guid "GUID"
                                 :domain "Domain"
-                                :rootfs "Docker image"
-                                :completion_callback_url "Callback URL"})
+                                :rootfs "Docker image"})
    (section :successful "Successful" {:task_guid "GUID"
                                       :domain "Domain"
                                       :rootfs "Docker image"
