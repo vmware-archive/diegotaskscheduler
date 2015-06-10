@@ -24,7 +24,7 @@
 (def uploads (chan))
 
 (defn update-tasks [m tasks-from-diego]
-  (let [{failed true not-failed false} (group-by :failed (:tasks tasks-from-diego))]
+  (let [{failed true not-failed false} (group-by :failed tasks-from-diego)]
     (assoc m
       :failed failed
       :successful (filter #(= "COMPLETED" (:state %)) not-failed)

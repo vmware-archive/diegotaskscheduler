@@ -1,7 +1,6 @@
 (ns diegoscheduler.app
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [<! >! put! go-loop chan timeout
-                                        tap mult dropping-buffer alt! split]]))
+            [clojure.core.async :refer [>! put! go-loop chan alt!]]))
 
 (defn- log [msg]
   (println msg))
@@ -10,17 +9,14 @@
   component/Lifecycle
   (start [component]
     (log "Starting new app")
-    (let [stopper (chan)
-          state (atom {:tasks []})]
+    (let [stopper (chan)]
       (go-loop []
         (alt!
           tasks-from-diego ([tasks _]
-                            (>! client-pushes (swap! state
-                                                     assoc :tasks tasks))
+                            (>! client-pushes tasks)
                             (recur))
           stopper :stopped))
       (assoc component
-             :state state
              :stopper stopper)))
   (stop [component]
     (when stopper (put! stopper :please-stop))
