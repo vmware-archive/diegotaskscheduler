@@ -20,13 +20,9 @@
         getfn (fn [] (http/GET tasks-url))
         postfn (fn [task] (http/POST tasks-url task))]
     (component/system-map
-     :diego (new-diego new-tasks tasks-from-diego schedule
-                       getfn postfn)
+     :diego (new-diego new-tasks tasks-from-diego schedule getfn postfn)
      :app (new-app tasks-from-diego client-pushes)
-     :web (new-web-server new-tasks
-                          client-pushes
-                          port
-                          ws-url))))
+     :web (new-web-server new-tasks client-pushes port ws-url))))
 
 (defn -main []
   (let [{:keys [port api-url ws-url]} env]
