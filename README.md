@@ -26,7 +26,7 @@ The first time you run this, Leiningen will download Clojure, ClojureScript and 
 (exit)
 ```
 
-Ignore any warnings. I'll get around to fixing those. Note you can also do (development-build). See dev_src/user.clj for build differences.
+Note you can also do (development-build). See dev_src/user.clj for build differences.
 
 Then run the following to compile a JAR:
 
