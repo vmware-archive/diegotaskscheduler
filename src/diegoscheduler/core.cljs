@@ -8,19 +8,14 @@
 
 (enable-console-print!)
 
-(defn guid []
-  (-> (js/Math.random) (.toString 36) (.slice 2)))
-
 (def new-task
-  (let [new-guid (guid)]
-    (atom {:guid new-guid
-           :domain "task-scheduler"
-           :docker-image "docker:///camelpunch/s3copier"
-           :path "/app/run.sh"
-           :dir "/app"
-           :args "lattices3cp-source/commonpeople.jpg lattices3cp-destination/acommoncopy.jpg"
-           :result-file "/tmp/result_file"
-           :env "AWS_ACCESS_KEY_ID=blah AWS_SECRET_ACCESS_KEY=likeidtellyouplz"})))
+  (atom {:domain "task-scheduler"
+         :docker-image "docker:///camelpunch/s3copier"
+         :path "/app/run.sh"
+         :dir "/app"
+         :args "lattices3cp-source/commonpeople.jpg lattices3cp-destination/acommoncopy.jpg"
+         :result-file "/tmp/result_file"
+         :env "AWS_ACCESS_KEY_ID=blah AWS_SECRET_ACCESS_KEY=likeidtellyouplz"}))
 
 (defonce tasks (atom {:pending []
                       :running []
@@ -81,12 +76,8 @@
                 (handle-outgoing ws-channel)
                 (handle-incoming ws-channel)))))))
 
-(defn set-guid [m]
-  (assoc m :guid (guid)))
-
 (defn upload-task []
-  (put! uploads @new-task)
-  (swap! new-task set-guid))
+  (put! uploads @new-task))
 
 (defn event-update [a attr]
   (fn [e]
@@ -140,12 +131,6 @@
    [:div.fw-section
     [:div.section-ctr
      [:h2.sub-heading "Controls"]
-     [:p.form-control
-      [:label.lbl {:for "task_guid"} "GUID"]
-      [:input#task-guid.inpt {:name "task_guid"
-                              :disabled "disabled"
-                              :size 9,
-                              :value (@new-task :guid)}]]
      (input new-task :domain "Domain")
      (input new-task :docker-image "Docker image")
      (input new-task :path "Path to executable")

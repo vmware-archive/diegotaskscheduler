@@ -7,7 +7,8 @@
             [org.httpkit.server :refer [run-server]]
             [chord.http-kit :refer [wrap-websocket-handler]]
             [diegoscheduler.diego :as d]
-            [diegoscheduler.pages :as pages]))
+            [diegoscheduler.pages :as pages])
+  (:import java.util.UUID))
 
 (defn- log [msg]
   (println msg))
@@ -17,8 +18,8 @@
     (when-let [{:keys [message error] :as msg} (<! web-client)]
       (if error
         (>! web-client {:error msg})
-        (let [{:keys [args guid dir domain docker-image
-                      env path result-file]} message
+        (let [{:keys [args dir domain docker-image env path result-file]} message
+              guid (str (UUID/randomUUID))
               task (d/create-task {:guid guid
                                    :dir dir
                                    :domain domain

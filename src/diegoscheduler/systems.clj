@@ -1,6 +1,6 @@
 (ns diegoscheduler.systems
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [chan timeout mix admix]]
+            [clojure.core.async :refer [chan timeout]]
             [environ.core :refer [env]]
             [diegoscheduler.app :refer [new-app]]
             [diegoscheduler.web :refer [new-web-server]]
