@@ -34,7 +34,7 @@ Then run the following to compile a JAR:
 lein uberjar
 ```
 
-Now run the following to start the server, replacing $YOUR_IP_HERE with the IP of your machine on your local network. This is needed to allow Lattice to keep Diego Scheduler updated about finished tasks.
+Now run the following to start the server:
 
 ```sh
 PORT=8080 \
