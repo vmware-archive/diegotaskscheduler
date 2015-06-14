@@ -16,3 +16,4 @@ log/*.log
 .lein-env
 .lein-failures
 *#*#
+.cljs_*_repl
