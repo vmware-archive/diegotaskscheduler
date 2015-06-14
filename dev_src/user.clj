@@ -52,6 +52,7 @@
 
   (development-build)
   (production-build)
+  (cemerick.piggieback/cljs-repl (cljs.repl.rhino/repl-env))
 
   (:web system)
 

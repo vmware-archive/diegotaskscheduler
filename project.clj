@@ -26,11 +26,12 @@
   :main diegoscheduler.systems
 
   :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.10"]
-                                  [org.clojure/tools.namespace "0.2.10"]]
-                   :repl-options {:init-ns user}
+                                  [org.clojure/tools.namespace "0.2.10"]
+                                  [com.cemerick/piggieback "0.2.1"]]
+                   :repl-options {:init-ns user
+                                  :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
                    :source-paths ["dev_src"]
-                   :plugins [[cider/cider-nrepl "0.9.0-SNAPSHOT"]
-                             [com.cemerick/austin "0.1.6"]]
+                   :plugins [[cider/cider-nrepl "0.9.0-SNAPSHOT"]]
                    :env {:port 8081
                          :ws-url "ws://localhost:8081/ws"}}
              :uberjar {:main diegoscheduler.systems
