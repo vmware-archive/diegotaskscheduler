@@ -2,7 +2,6 @@
   (:require [com.stuartsierra.component :as component]
             [clojure.core.async :refer [chan timeout]]
             [environ.core :refer [env]]
-            [diegoscheduler.app :refer [new-app]]
             [diegoscheduler.web :refer [new-web-server]]
             [diegoscheduler.diego :refer [new-diego]]
             [diegoscheduler.http :as http])
@@ -21,8 +20,7 @@
         postfn (fn [task] (http/POST tasks-url task))]
     (component/system-map
      :diego (new-diego new-tasks tasks-from-diego schedule getfn postfn)
-     :app (new-app tasks-from-diego client-pushes)
-     :web (new-web-server new-tasks client-pushes port ws-url))))
+     :web (new-web-server new-tasks tasks-from-diego port ws-url))))
 
 (defn -main []
   (let [{:keys [port api-url ws-url]} env]
