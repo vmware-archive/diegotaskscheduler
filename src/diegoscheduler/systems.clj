@@ -22,14 +22,13 @@
         tasks-from-diego (chan)
         [retries tasks-for-display] (split capacity-failure? tasks-from-diego)
         client-pushes (chan)
-        schedule (fn [] (timeout update-interval))
-        tasks-url (str api-url "/tasks")
-        getfn (fn [] (http/GET tasks-url))
-        postfn (fn [task] (http/POST tasks-url task))]
+        schedule (fn [] (timeout update-interval))]
     (pipeline 1 new-tasks assign-new-guids retries false
               (fn [e] (println "Problem:" e)))
     (component/system-map
-     :diego (new-diego new-tasks tasks-from-diego schedule getfn postfn)
+     :diego (new-diego new-tasks tasks-from-diego schedule
+                       http/GET http/POST http/DELETE
+                       api-url)
      :web (new-web-server new-tasks tasks-for-display port ws-url))))
 
 (defn -main []

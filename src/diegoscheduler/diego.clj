@@ -29,14 +29,22 @@
    :disk_mb 1000
    :memory_mb 1000})
 
-(defn- remote-tasks [{getfn :getfn}]
-  (let [[error, result] (getfn)]
+(defn- remote-tasks [{getfn :getfn
+                      api-url :api-url}]
+  (let [[error, result] (getfn (str api-url "/tasks"))]
     (if error
       (println error)
       result)))
 
+(defn- delete-completed [{deletefn :deletefn api-url :api-url}
+                         tasks]
+  (let [completed-tasks (filter #(= "COMPLETED" (:state %)) tasks)]
+    (doseq [t completed-tasks]
+      (deletefn (str api-url "/tasks/" (:task_guid t))))))
+
 (defrecord Diego [new-tasks tasks-from-diego schedule
-                  getfn postfn
+                  getfn postfn deletefn
+                  api-url
                   stopper]
   component/Lifecycle
   (start [component]
@@ -44,10 +52,11 @@
       (go-loop []
         (alt!
           new-tasks ([task _]
-                     (postfn task)
+                     (postfn (str api-url "/tasks") task)
                      (recur))
           (schedule) ([_ _]
                       (let [tasks (remote-tasks component)]
+                        (delete-completed component tasks)
                         (onto-chan tasks-from-diego tasks false)
                         (recur)))
           stopper :stopped))
@@ -57,9 +66,12 @@
     component))
 
 (defn new-diego [new-tasks tasks-from-diego schedule
-                 getfn postfn]
+                 getfn postfn deletefn
+                 api-url]
   (map->Diego {:new-tasks new-tasks
                :tasks-from-diego tasks-from-diego
                :schedule schedule
                :getfn getfn
-               :postfn postfn}))
+               :postfn postfn
+               :deletefn deletefn
+               :api-url api-url}))

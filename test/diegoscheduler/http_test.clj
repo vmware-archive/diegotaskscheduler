@@ -24,3 +24,9 @@
     (is (= ["Unknown Host" nil] (GET "http://made.up.place.hopefully.will.never.exist/"))))
   (testing "Connection Refused"
     (is (= ["Connection Refused", nil] (GET "http://127.0.0.1:9999")))))
+
+(deftest DELETEing
+  (testing "Success"
+    (is (= "http://eu.httpbin.org/delete"
+           (let [[_ result] (DELETE "http://eu.httpbin.org/delete")]
+             (result :url))))))

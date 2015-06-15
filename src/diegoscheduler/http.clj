@@ -22,3 +22,9 @@
           (let [result ((client/get url {:as :json})
                         :body)]
             [nil result]))))
+
+(defn DELETE [url]
+  (wrap (fn []
+          (let [result ((client/delete url {:as :json})
+                        :body)]
+            [nil result]))))
