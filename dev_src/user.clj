@@ -7,7 +7,8 @@
             [diegoscheduler.diego :as diego]
             [environ.core :refer [env]]
             [leiningen.clean :refer [delete-file-recursively]]
-            [cljs.build.api :as js])
+            [cljs.build.api :as js]
+            [cljs.repl.node])
   (:import [java.net InetAddress]))
 
 (def js-dir "resources/public/js")
@@ -52,7 +53,8 @@
 
   (development-build)
   (production-build)
-  (cemerick.piggieback/cljs-repl (cljs.repl.rhino/repl-env))
+  (cemerick.piggieback/cljs-repl (cljs.repl.node/repl-env))
+  (cemerick.cljs.test/test-ns 'diegoscheduler.core-test)
 
   (:web system)
 

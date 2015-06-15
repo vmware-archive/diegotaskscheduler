@@ -27,7 +27,8 @@
 
   :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.10"]
                                   [org.clojure/tools.namespace "0.2.10"]
-                                  [com.cemerick/piggieback "0.2.1"]]
+                                  [com.cemerick/piggieback "0.2.1"]
+                                  [com.cemerick/clojurescript.test "0.3.3"]]
                    :repl-options {:init-ns user
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
                    :source-paths ["dev_src"]

@@ -5,16 +5,16 @@
             [com.stuartsierra.component :refer [start stop]]))
 
 (deftest task-receive
- (testing "Processing tasks are sent to the appropriate channel on a schedule"
+ (testing "Task state changes are sent to the appropriate channel on a schedule"
    (let [new-tasks (chan)
          fire-now (chan)
          schedule (fn [] fire-now)
          output (chan)
-         getfn (fn [] [nil, [{:some :task}]])
+         getfn (fn [] [nil, [{:some :task} {:some :other-task}]])
          diego (new-diego (chan) output schedule
                           getfn (fn []))
          running-diego (start diego)]
      (>!! fire-now :please)
-     (let [item (<!! output)]
-       (is (= {:tasks [{:some :task}]} item)))
+     (is (= {:some :task} (<!! output)))
+     (is (= {:some :other-task} (<!! output)))
      (stop diego))))

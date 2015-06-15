@@ -1,6 +1,6 @@
 (ns diegoscheduler.diego
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [put! >! chan alt! go-loop]]
+            [clojure.core.async :refer [put! >! chan alt! go-loop onto-chan]]
             [clojure.string :as s]
             [clj-http.client :as client]
             [slingshot.slingshot :refer [try+]]
@@ -48,7 +48,7 @@
                      (recur))
           (schedule) ([_ _]
                       (let [tasks (remote-tasks component)]
-                        (>! tasks-from-diego {:tasks tasks})
+                        (onto-chan tasks-from-diego tasks false)
                         (recur)))
           stopper :stopped))
       (assoc component :stopper stopper)))

@@ -23,33 +23,33 @@
                       :failed []}))
 (def uploads (chan))
 
-(defn update-tasks [m tasks-from-diego]
-  (let [{failed true not-failed false} (group-by :failed tasks-from-diego)]
-    (assoc m
-      :failed failed
-      :successful (filter #(= "COMPLETED" (:state %)) not-failed)
-      :pending (filter #(= "PENDING" (:state %)) not-failed)
-      :running (filter #(= "RUNNING" (:state %)) not-failed)
-      )))
+(defn same-guid-as [m]
+  #(= (:task_guid m) (:task_guid %)))
 
-(defn handle-tasks [tasks-from-diego]
-  (swap! tasks update-tasks tasks-from-diego))
+(defn remove-old-state [m task-update]
+  (reduce (fn [acc [state tasks]]
+            (merge acc
+                   {state (vec (remove (same-guid-as task-update) tasks))}))
+          {} m))
 
-(defn log-handler [body]
-  (js/console.log (clj->js body)))
+(defn state-of [task-update]
+  (if (:failed task-update)
+    :failed
+    (case (:state task-update)
+      "COMPLETED" :successful
+      "RUNNING" :running
+      "PENDING" :pending)))
 
-(def handlers
-  {:tasks handle-tasks
-   :log log-handler})
+(defn add-new-state [m task-update]
+  (update-in m [(state-of task-update)] conj task-update))
 
-(defn no-handler [key message]
-  (js/console.log (str "No handler defined for key: " key "\n\nMessage: " message)))
+(defn handle-task-update [m task-update]
+  (-> m
+      (remove-old-state task-update)
+      (add-new-state task-update)))
 
-(defn route-message [message]
-  (let [key (-> message keys first)]
-    (if (contains? handlers key)
-      ((key handlers) (key message))
-      (no-handler key message))))
+(defn handle-task [task-update]
+  (swap! tasks handle-task-update task-update))
 
 (defn handle-outgoing [server]
   (go-loop []
@@ -63,7 +63,7 @@
                 error :error} (<! server)]
       (if error
         (js/console.log "ERROR: " error "\n\n" message)
-        (route-message message))
+        (handle-task message))
       (recur))))
 
 (set! (.-onload js/window)
