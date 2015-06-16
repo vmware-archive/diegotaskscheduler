@@ -15,7 +15,7 @@
                                                      com.cognitect/transit-cljs]]
                  [org.clojure/clojurescript "0.0-3308"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
-                 [reagent "0.5.0-alpha3"]
+                 [reagent "0.5.0"]
                  [hiccup "1.0.5"]
                  [leiningen "2.5.1"]
                  [org.clojure/tools.logging "0.3.1"]]
