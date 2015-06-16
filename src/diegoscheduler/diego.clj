@@ -2,6 +2,7 @@
   (:require [com.stuartsierra.component :as component]
             [clojure.core.async :refer [put! >! chan alt! go-loop onto-chan]]
             [clojure.string :as s]
+            [clojure.tools.logging :as log]
             [clj-http.client :as client]
             [slingshot.slingshot :refer [try+]]
             [diegoscheduler.http :as http]))
@@ -33,7 +34,7 @@
                       api-url :api-url}]
   (let [[error, result] (getfn (str api-url "/tasks"))]
     (if error
-      (println error)
+      (log/error error)
       result)))
 
 (defn- delete-completed [{deletefn :deletefn api-url :api-url}
@@ -57,6 +58,8 @@
           (schedule) ([_ _]
                       (let [tasks (remote-tasks component)]
                         (delete-completed component tasks)
+                        (doseq [t tasks]
+                          (log/info (:state t) " " (:task_guid t)))
                         (onto-chan tasks-from-diego tasks false)
                         (recur)))
           stopper :stopped))

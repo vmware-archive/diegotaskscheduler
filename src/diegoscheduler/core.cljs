@@ -49,6 +49,7 @@
       (add-new-state task-update)))
 
 (defn handle-task [task-update]
+  (println (:state task-update) (:task_guid task-update))
   (swap! tasks handle-task-update task-update))
 
 (defn handle-outgoing [server]

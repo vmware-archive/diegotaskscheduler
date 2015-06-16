@@ -17,7 +17,8 @@
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [reagent "0.5.0-alpha3"]
                  [hiccup "1.0.5"]
-                 [leiningen "2.5.1"]]
+                 [leiningen "2.5.1"]
+                 [org.clojure/tools.logging "0.3.1"]]
 
   :plugins [[lein-environ "1.0.0"]]
 

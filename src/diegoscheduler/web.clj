@@ -1,6 +1,7 @@
 (ns diegoscheduler.web
   (:require [com.stuartsierra.component :as component]
             [clojure.core.async :refer [<! >! put! go-loop chan pipe tap mult dropping-buffer]]
+            [clojure.tools.logging :as log]
             [compojure.core :refer :all]
             [compojure.route :as route]
             [ring.util.response :refer [resource-response]]
@@ -9,9 +10,6 @@
             [diegoscheduler.diego :as d]
             [diegoscheduler.pages :as pages])
   (:import java.util.UUID))
-
-(defn- log [msg]
-  (println msg))
 
 (defn- handle-new-tasks [new-tasks web-client]
   (go-loop []
@@ -28,12 +26,12 @@
                                    :args args
                                    :env env
                                    :result-file result-file})]
-          (log (str "New task with guid " guid))
+          (log/info "User task request with guid " guid)
           (>! new-tasks task)))
       (recur))))
 
 (defn- create-ws-handler [new-tasks client-pushes]
-  (log (str "New WS chan: " client-pushes))
+  (log/info "New WS chan: " client-pushes)
   (fn [{web-client :ws-channel}]
     (handle-new-tasks new-tasks web-client)
     (pipe client-pushes web-client)))
@@ -43,10 +41,11 @@
     (routes
      (GET "/" [] {:status 200 :body (pages/index {:ws-url ws-url})})
      (GET "/ws" []
-          (log "Got /ws request")
-          (-> (create-ws-handler new-tasks
-                                 (tap updates-mult (chan (dropping-buffer 1))))
-              (wrap-websocket-handler)))
+          (log/info "Got /ws request")
+          (let [c (chan)]
+            (tap updates-mult c)
+            (-> (create-ws-handler new-tasks c)
+                (wrap-websocket-handler))))
      (route/resources "/")
      (route/not-found "<h1>Page not found</h1>"))))
 
@@ -55,7 +54,7 @@
                       server]
   component/Lifecycle
   (start [component]
-    (log (str "Using port " port))
+    (log/info "Using port " port)
     (let [routes (create-routes new-tasks client-pushes ws-url)
           server (run-server routes {:port port})]
       (assoc component :server server)))
