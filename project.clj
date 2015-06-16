@@ -37,8 +37,7 @@
                    :env {:port 8081
                          :ws-url "ws://localhost:8081/ws"}}
              :uberjar {:main diegoscheduler.systems
-                       :aot [diegoscheduler.app
-                             diegoscheduler.diego
+                       :aot [diegoscheduler.diego
                              diegoscheduler.http
                              diegoscheduler.pages
                              diegoscheduler.systems
