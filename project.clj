@@ -33,7 +33,7 @@
                    :repl-options {:init-ns user
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
                    :source-paths ["dev_src"]
-                   :plugins [[cider/cider-nrepl "0.9.0-SNAPSHOT"]]
+                   :plugins [[cider/cider-nrepl "0.9.0"]]
                    :env {:port 8081
                          :ws-url "ws://localhost:8081/ws"}}
              :uberjar {:main diegoscheduler.systems
