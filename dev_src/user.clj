@@ -8,7 +8,8 @@
             [environ.core :refer [env]]
             [leiningen.clean :refer [delete-file-recursively]]
             [cljs.build.api :as js]
-            [cljs.repl.node])
+            [cljs.repl.node]
+            [clojure.repl :refer [doc]])
   (:import [java.net InetAddress]))
 
 (def js-dir "resources/public/js")
