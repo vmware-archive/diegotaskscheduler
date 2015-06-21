@@ -13,7 +13,10 @@
 
 (defn main-system [port-str api-url ws-url]
   (let [port (Integer. port-str)
-        new-tasks (chan)
+        new-tasks-input (chan)
+        new-tasks-mult (mult new-tasks-input)
+        new-tasks-reader-1 (chan)
+        new-tasks-reader-2 (chan)
         tasks-from-diego (chan)
         schedule (fn [] (timeout update-interval))
         tasks-from-diego-mult (mult tasks-from-diego)
@@ -21,12 +24,17 @@
         tasks-for-ui (chan)]
     (tap tasks-from-diego-mult tasks-for-resubmission-filtering false)
     (tap tasks-from-diego-mult tasks-for-ui false)
+    (tap new-tasks-mult new-tasks-reader-1 false)
+    (tap new-tasks-mult new-tasks-reader-2 false)
     (component/system-map
-     :diego (new-diego new-tasks tasks-from-diego schedule
+     :diego (new-diego new-tasks-reader-1
+                       tasks-from-diego schedule
                        http/GET http/POST http/DELETE
                        api-url)
-     :resubmitter (new-resubmitter tasks-for-resubmission-filtering new-tasks)
-     :web (new-web-server new-tasks tasks-for-ui port ws-url))))
+     :resubmitter (new-resubmitter tasks-for-resubmission-filtering
+                                   new-tasks-input
+                                   new-tasks-reader-2)
+     :web (new-web-server new-tasks-input tasks-for-ui port ws-url))))
 
 (defn -main []
   (let [{:keys [port api-url ws-url]} env]
