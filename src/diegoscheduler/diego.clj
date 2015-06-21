@@ -59,7 +59,7 @@
                       (let [tasks (remote-tasks component)]
                         (delete-completed component tasks)
                         (doseq [t tasks]
-                          (log/info (:state t) " " (:task_guid t)))
+                          (log/info (:state t) (:task_guid t)))
                         (onto-chan tasks-from-diego tasks false)
                         (recur)))
           stopper :stopped))
