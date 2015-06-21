@@ -1,39 +1,32 @@
 (ns diegoscheduler.systems
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [chan timeout split pipeline]]
+            [clojure.core.async :refer [chan timeout split pipeline mult tap]]
             [clojure.tools.logging :as log]
             [environ.core :refer [env]]
             [diegoscheduler.web :refer [new-web-server]]
             [diegoscheduler.diego :refer [new-diego]]
+            [diegoscheduler.resubmitter :refer [new-resubmitter]]
             [diegoscheduler.http :as http])
-  (:import java.util.UUID)
   (:gen-class))
 
 (def ^:private update-interval 500)
-
-(def ^:private assign-new-guids
-  (map #(let [new-task (assoc % :task_guid (str (UUID/randomUUID)))]
-         (log/info "Assigned guid" (:task_guid new-task)
-                   "to failed guid" (:task_guid %))
-         new-task)))
-
-(defn- capacity-failure? [t]
-  (log/info "Assessing" (:task_guid t) (:state t) (:failure_reason t))
-  (= "insufficient resources" (:failure_reason t)))
 
 (defn main-system [port-str api-url ws-url]
   (let [port (Integer. port-str)
         new-tasks (chan)
         tasks-from-diego (chan)
-        [retries tasks-for-display] (split capacity-failure? tasks-from-diego)
-        schedule (fn [] (timeout update-interval))]
-    (pipeline 1 new-tasks assign-new-guids retries false
-              (fn [e] (log/error "Problem:" e)))
+        schedule (fn [] (timeout update-interval))
+        tasks-from-diego-mult (mult tasks-from-diego)
+        tasks-for-resubmission-filtering (chan)
+        tasks-for-ui (chan)]
+    (tap tasks-from-diego-mult tasks-for-resubmission-filtering false)
+    (tap tasks-from-diego-mult tasks-for-ui false)
     (component/system-map
      :diego (new-diego new-tasks tasks-from-diego schedule
                        http/GET http/POST http/DELETE
                        api-url)
-     :web (new-web-server new-tasks tasks-for-display port ws-url))))
+     :resubmitter (new-resubmitter tasks-for-resubmission-filtering new-tasks)
+     :web (new-web-server new-tasks tasks-for-ui port ws-url))))
 
 (defn -main []
   (let [{:keys [port api-url ws-url]} env]

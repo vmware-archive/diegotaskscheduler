@@ -34,7 +34,7 @@
   (log/info "New WS chan: " client-pushes)
   (fn [{web-client :ws-channel}]
     (handle-new-tasks new-tasks web-client)
-    (pipe client-pushes web-client)))
+    (pipe client-pushes web-client false)))
 
 (defn- create-routes [new-tasks client-pushes ws-url]
   (let [updates-mult (mult client-pushes)]
