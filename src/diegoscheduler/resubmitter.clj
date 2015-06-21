@@ -18,6 +18,7 @@
       (log/info "Assigned guid" (:task_guid new-task)
                 "to failed guid" (:task_guid failure)
                 "from matching old guid" (:task_guid old-task))
+      (swap! tasks dissoc (:task_guid failure))
       new-task)))
 
 (defn make-resubmittable [tasks]
