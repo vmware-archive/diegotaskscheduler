@@ -4,7 +4,6 @@
             [clojure.string :as s]
             [clojure.tools.logging :as log]
             [clj-http.client :as client]
-            [slingshot.slingshot :refer [try+]]
             [diegoscheduler.http :as http]))
 
 (defn parse-task [raw-task]
