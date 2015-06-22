@@ -11,6 +11,9 @@
 
 (def ^:private update-interval 500)
 
+(defn- capacity-failure? [t]
+  (= "insufficient resources" (:failure_reason t)))
+
 (defn main-system [port-str api-url ws-url]
   (let [port (Integer. port-str)
         new-tasks-input (chan)
@@ -18,12 +21,8 @@
         new-tasks-reader-1 (chan)
         new-tasks-reader-2 (chan)
         tasks-from-diego (chan)
-        schedule (fn [] (timeout update-interval))
-        tasks-from-diego-mult (mult tasks-from-diego)
-        tasks-for-resubmission-filtering (chan)
-        tasks-for-ui (chan)]
-    (tap tasks-from-diego-mult tasks-for-resubmission-filtering false)
-    (tap tasks-from-diego-mult tasks-for-ui false)
+        [tasks-for-resubmission tasks-for-ui] (split capacity-failure? tasks-from-diego)
+        schedule (fn [] (timeout update-interval))]
     (tap new-tasks-mult new-tasks-reader-1 false)
     (tap new-tasks-mult new-tasks-reader-2 false)
     (component/system-map
@@ -31,7 +30,7 @@
                        tasks-from-diego schedule
                        http/GET http/POST http/DELETE
                        api-url)
-     :resubmitter (new-resubmitter tasks-for-resubmission-filtering
+     :resubmitter (new-resubmitter tasks-for-resubmission
                                    new-tasks-input
                                    new-tasks-reader-2)
      :web (new-web-server new-tasks-input tasks-for-ui port ws-url))))

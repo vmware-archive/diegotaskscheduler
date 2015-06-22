@@ -7,9 +7,6 @@
 (def ^:private parallelism 1)
 (def ^:private close-when-from-closes? false)
 
-(defn- capacity-failure? [t]
-  (= "insufficient resources" (:failure_reason t)))
-
 (defn- assign-new-guid [tasks]
   (fn [failure]
     (let [new-guid (str (UUID/randomUUID))
@@ -22,9 +19,7 @@
       new-task)))
 
 (defn make-resubmittable [tasks]
-  (comp
-   (filter capacity-failure?)
-   (map (assign-new-guid tasks))))
+  (map (assign-new-guid tasks)))
 
 (defrecord Resubmitter [from-diego to-diego from-user]
   component/Lifecycle
