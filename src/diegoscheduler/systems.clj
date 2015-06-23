@@ -18,21 +18,21 @@
   (let [port (Integer. port-str)
         new-tasks-input (chan)
         new-tasks-mult (mult new-tasks-input)
-        new-tasks-reader-1 (chan)
-        new-tasks-reader-2 (chan)
+        diego-task-reader (chan)
+        resubmitter-task-reader (chan)
         tasks-from-diego (chan)
         [tasks-for-resubmission tasks-for-ui] (split capacity-failure? tasks-from-diego)
         schedule (fn [] (timeout update-interval))]
-    (tap new-tasks-mult new-tasks-reader-1 false)
-    (tap new-tasks-mult new-tasks-reader-2 false)
+    (tap new-tasks-mult diego-task-reader false)
+    (tap new-tasks-mult resubmitter-task-reader false)
     (component/system-map
-     :diego (new-diego new-tasks-reader-1
+     :diego (new-diego diego-task-reader
                        tasks-from-diego schedule
                        http/GET http/POST http/DELETE
                        api-url)
      :resubmitter (new-resubmitter tasks-for-resubmission
                                    new-tasks-input
-                                   new-tasks-reader-2)
+                                   resubmitter-task-reader)
      :web (new-web-server new-tasks-input tasks-for-ui port ws-url))))
 
 (defn -main []
