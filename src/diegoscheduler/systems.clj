@@ -1,6 +1,6 @@
 (ns diegoscheduler.systems
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [chan timeout split pipeline mult tap]]
+            [clojure.core.async :as async :refer [chan timeout split mult tap]]
             [clojure.tools.logging :as log]
             [environ.core :refer [env]]
             [diegoscheduler.web :refer [new-web-server]]
@@ -22,6 +22,7 @@
         resubmitter-task-reader (chan)
         tasks-from-diego (chan)
         [tasks-for-resubmission tasks-for-ui] (split capacity-failure? tasks-from-diego)
+        ui-updates (async/merge [tasks-for-ui])
         schedule (fn [] (timeout update-interval))]
     (tap new-tasks-mult diego-task-reader false)
     (tap new-tasks-mult resubmitter-task-reader false)
@@ -33,7 +34,7 @@
      :resubmitter (new-resubmitter tasks-for-resubmission
                                    new-tasks-input
                                    resubmitter-task-reader)
-     :web (new-web-server new-tasks-input tasks-for-ui port ws-url))))
+     :web (new-web-server new-tasks-input ui-updates port ws-url))))
 
 (defn -main []
   (let [{:keys [port api-url ws-url]} env]
