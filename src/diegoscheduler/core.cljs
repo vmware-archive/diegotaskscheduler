@@ -1,9 +1,9 @@
 (ns diegoscheduler.core
     (:require
      [reagent.core :as reagent :refer [atom]]
-     [chord.client :refer [ws-ch]]
      [cljs.core.async :refer [<! >! put! close! chan]]
-     [clojure.string :refer [join split]])
+     [clojure.string :refer [join split]]
+     [taoensso.sente :as sente :refer [cb-success?]])
     (:require-macros [cljs.core.async.macros :refer [go go-loop]]))
 
 (enable-console-print!)
@@ -52,33 +52,30 @@
   (println (:state task-update) (:task_guid task-update))
   (swap! tasks handle-task-update task-update))
 
-(defn handle-outgoing [server]
-  (go-loop []
-    (when-let [msg (<! uploads)]
-      (>! server msg)
-      (recur))))
+(defn chsk-url-fn
+  [path {:as window-location :keys [host pathname]} websocket?]
+  (if websocket?
+    js/window.wsUrl
+    (str "//" host (or path pathname))))
 
-(defn handle-incoming [server]
-  (go-loop []
-    (when-let [{message :message
-                error :error} (<! server)]
-      (if error
-        (js/console.log "ERROR: " error "\n\n" message)
-        (handle-task message))
-      (recur))))
+(let [{:keys [chsk ch-recv send-fn state]}
+      (sente/make-channel-socket! "/ws" {:type :auto
+                                         :chsk-url-fn chsk-url-fn})]
+  (def chsk chsk)
+  (def ch-chsk ch-recv)
+  (def chsk-send! send-fn)
+  (def chsk-state state))
 
 (set! (.-onload js/window)
       (fn []
-        (go
-          (let [{:keys [ws-channel error]} (<! (ws-ch js/window.wsUrl))]
-            (if error
-              (js/console.log "ERROR: " (pr-str error))
-              (do
-                (handle-outgoing ws-channel)
-                (handle-incoming ws-channel)))))))
+        (go-loop []
+          (when-let [{[id event-data] :event} (<! ch-chsk)]
+            (when (= :chsk/recv id)
+              (handle-task (second event-data)))
+            (recur)))))
 
 (defn upload-task []
-  (put! uploads @new-task))
+  (chsk-send! [:diegotaskscheduler/task @new-task]))
 
 (defn event-update [a attr]
   (fn [e]

@@ -1,22 +1,24 @@
 (ns diegoscheduler.web
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [<! >! put! go-loop chan pipe tap mult dropping-buffer]]
+            [clojure.core.async :refer [<! >! put! go-loop chan pipe]]
             [clojure.tools.logging :as log]
             [compojure.core :refer :all]
             [compojure.route :as route]
             [ring.util.response :refer [resource-response]]
+            [ring.middleware.params]
+            [ring.middleware.keyword-params]
             [org.httpkit.server :refer [run-server]]
-            [chord.http-kit :refer [wrap-websocket-handler]]
+            [taoensso.sente :as sente]
+            [taoensso.sente.server-adapters.http-kit :refer [sente-web-server-adapter]]
             [diegoscheduler.diego :as d]
             [diegoscheduler.pages :as pages])
   (:import java.util.UUID))
 
 (defn- handle-new-tasks [new-tasks web-client]
   (go-loop []
-    (when-let [{:keys [message error] :as msg} (<! web-client)]
-      (if error
-        (>! web-client {:error msg})
-        (let [{:keys [args dir domain docker-image env path result-file]} message
+    (when-let [{[id event-data] :event} (<! web-client)]
+      (when (= "diegotaskscheduler" (namespace id))
+        (let [{:keys [args dir domain docker-image env path result-file]} event-data
               guid (str (UUID/randomUUID))
               task (d/create-task {:guid guid
                                    :dir dir
@@ -30,22 +32,20 @@
           (>! new-tasks task)))
       (recur))))
 
-(defn- create-ws-handler [new-tasks client-pushes]
-  (log/info "New WS chan: " client-pushes)
-  (fn [{web-client :ws-channel}]
-    (handle-new-tasks new-tasks web-client)
-    (pipe client-pushes web-client false)))
-
 (defn- create-routes [new-tasks client-pushes ws-url]
-  (let [updates-mult (mult client-pushes)]
+  (let [{:keys [ch-recv send-fn
+                ajax-post-fn ajax-get-or-ws-handshake-fn
+                connected-uids]}
+        (sente/make-channel-socket! sente-web-server-adapter {})]
+    (handle-new-tasks new-tasks ch-recv)
+    (go-loop []
+      (when-let [task-update (<! client-pushes)]
+        (send-fn :sente/all-users-without-uid [:diegotaskscheduler/task task-update])
+        (recur)))
     (routes
-     (GET "/" [] {:status 200 :body (pages/index {:ws-url ws-url})})
-     (GET "/ws" []
-          (log/info "Got /ws request")
-          (let [c (chan)]
-            (tap updates-mult c)
-            (-> (create-ws-handler new-tasks c)
-                (wrap-websocket-handler))))
+     (GET "/"      []    {:status 200 :body (pages/index {:ws-url ws-url})})
+     (GET "/ws"  req   (ajax-get-or-ws-handshake-fn req))
+     (POST "/ws" req   (ajax-post-fn req))
      (route/resources "/")
      (route/not-found "<h1>Page not found</h1>"))))
 
@@ -55,7 +55,9 @@
   component/Lifecycle
   (start [component]
     (log/info "Using port " port)
-    (let [routes (create-routes new-tasks client-pushes ws-url)
+    (let [routes (-> (create-routes new-tasks client-pushes ws-url)
+                     ring.middleware.keyword-params/wrap-keyword-params
+                     ring.middleware.params/wrap-params)
           server (run-server routes {:port port})]
       (assoc component :server server)))
   (stop [component]

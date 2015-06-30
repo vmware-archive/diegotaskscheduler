@@ -11,8 +11,7 @@
                  [clj-http "1.1.2" :exclusions [org.clojure/tools.reader]]
                  [compojure "1.3.4"]
                  [com.cognitect/transit-cljs "0.8.220"]
-                 [jarohen/chord "0.6.0" :exclusions [org.clojure/tools.reader
-                                                     com.cognitect/transit-cljs]]
+                 [com.taoensso/sente "1.5.0"]
                  [org.clojure/clojurescript "0.0-3308"]
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [reagent "0.5.0"]
@@ -34,8 +33,7 @@
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
                    :source-paths ["dev_src"]
                    :plugins [[cider/cider-nrepl "0.9.0"]]
-                   :env {:port 8081
-                         :ws-url "ws://localhost:8081/ws"}}
+                   :env {:port 8081}}
              :uberjar {:main diegoscheduler.systems
                        :aot [diegoscheduler.diego
                              diegoscheduler.http
