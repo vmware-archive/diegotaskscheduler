@@ -16,7 +16,8 @@
          :dir "/app"
          :args "lattices3cp-source/commonpeople.jpg lattices3cp-destination/acommoncopy.jpg"
          :result-file "/tmp/result_file"
-         :env "AWS_ACCESS_KEY_ID=blah AWS_SECRET_ACCESS_KEY=likeidtellyouplz"}))
+         :env "AWS_ACCESS_KEY_ID=blah AWS_SECRET_ACCESS_KEY=likeidtellyouplz"
+         :quantity 1}))
 
 (defonce tasks (atom {:pending []
                       :running []
@@ -140,6 +141,7 @@
      (input new-task :dir "Directory")
      (input new-task :env "ENV")
      (input new-task :result-file "Result file")
+     (input new-task :quantity "Quantity")
      [:button.btn {:on-click upload-task} "Add Task"]]]
    (section :queued "Queued" {:task_guid "GUID"
                               :domain "Domain"

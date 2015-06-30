@@ -1,6 +1,6 @@
 (ns diegoscheduler.web
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [<! >! put! go-loop chan pipe]]
+            [clojure.core.async :refer [<! >! put! go-loop chan pipe onto-chan]]
             [clojure.tools.logging :as log]
             [compojure.core :refer :all]
             [compojure.route :as route]
@@ -19,19 +19,19 @@
     (when-let [{[id event-data] :event} (<! web-client)]
       (when (= "diegotaskscheduler" (namespace id))
         (let [{:keys [args dir domain docker-image env log-guid
-                      path result-file]} event-data
-              guid (str (UUID/randomUUID))
-              task (d/create-task {:guid guid
-                                   :log_guid log-guid
-                                   :dir dir
-                                   :domain domain
-                                   :rootfs docker-image
-                                   :path path
-                                   :args args
-                                   :env env
-                                   :result-file result-file})]
-          (log/info "User task request with guid " guid)
-          (>! new-tasks task)))
+                      path result-file quantity]} event-data
+              tasks (for [_ (range (Integer. quantity))]
+                      (d/create-task {:guid (str (UUID/randomUUID))
+                                      :log_guid log-guid
+                                      :dir dir
+                                      :domain domain
+                                      :rootfs docker-image
+                                      :path path
+                                      :args args
+                                      :env env
+                                      :result-file result-file}))]
+          (log/info "User request for" quantity "tasks")
+          (onto-chan new-tasks tasks false)))
       (recur))))
 
 (defn- create-routes [new-tasks client-pushes ws-url]
