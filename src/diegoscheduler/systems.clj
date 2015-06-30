@@ -20,15 +20,19 @@
         new-tasks-mult (mult new-tasks-input)
         diego-task-reader (chan)
         resubmitter-task-reader (chan)
-        tasks-from-diego (chan)
-        [tasks-for-resubmission tasks-for-ui] (split capacity-failure? tasks-from-diego)
+        tasks-from-diego-input (chan)
+        tasks-from-diego-mult (mult tasks-from-diego-input)
+        tasks-for-resubmission (chan 1 (filter capacity-failure?))
+        tasks-for-ui (chan)
         ui-updates (async/merge [tasks-for-ui])
         schedule (fn [] (timeout update-interval))]
     (tap new-tasks-mult diego-task-reader false)
     (tap new-tasks-mult resubmitter-task-reader false)
+    (tap tasks-from-diego-mult tasks-for-resubmission)
+    (tap tasks-from-diego-mult tasks-for-ui)
     (component/system-map
      :diego (new-diego diego-task-reader
-                       tasks-from-diego schedule
+                       tasks-from-diego-input schedule
                        http/GET http/POST http/DELETE
                        api-url)
      :resubmitter (new-resubmitter tasks-for-resubmission
