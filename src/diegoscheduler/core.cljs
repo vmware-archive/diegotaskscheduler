@@ -117,11 +117,12 @@
           (table-division keyfn k t))])]]])
 
 (defn section [state title task-attrs]
-  [:div
-   {:class (str "section " (name state) " numtasks" (count (state @tasks)))}
-   [:div.section-ctr
-    [:h2.sub-heading title]
-    (table state @tasks task-attrs)]])
+  (let [num-tasks (count (state @tasks))]
+    [:div
+     {:class (str "section " (name state) " numtasks" num-tasks)}
+     [:div.section-ctr
+      [:h2.sub-heading (str title " (" num-tasks ")")]
+      (table state @tasks task-attrs)]]))
 
 (defn page []
   [:div.container
