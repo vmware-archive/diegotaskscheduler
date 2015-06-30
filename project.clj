@@ -1,4 +1,4 @@
-(defproject diegoscheduler "0.2.0-SNAPSHOT"
+(defproject diegoscheduler "0.2.1-SNAPSHOT"
   :description "FIXME: write this!"
   :url "http://example.com/FIXME"
   :license {:name "Eclipse Public License"
