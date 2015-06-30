@@ -24,16 +24,16 @@
 (defrecord Resubmitter [from-diego to-diego from-user]
   component/Lifecycle
   (start [component]
-    (let [tasks (atom {})]
+    (let [user-submitted-tasks (atom {})]
       (pipeline parallelism to-diego
-                (make-resubmittable tasks) from-diego
+                (make-resubmittable user-submitted-tasks) from-diego
                 close-when-from-closes?
                 (fn [e] (log/error "Problem:" e)))
       (go-loop []
         (when-let [new-task (<! from-user)]
-          (swap! tasks assoc (:task_guid new-task) new-task)
+          (swap! user-submitted-tasks assoc (:task_guid new-task) new-task)
           (recur)))
-      (assoc component :tasks tasks)))
+      component))
   (stop [component]
     (close! to-diego)
     component))
