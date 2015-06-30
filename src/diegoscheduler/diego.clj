@@ -1,6 +1,6 @@
 (ns diegoscheduler.diego
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [put! >! chan alt! go-loop onto-chan]]
+            [clojure.core.async :refer [put! <! >! chan alt! go-loop onto-chan]]
             [clojure.string :as s]
             [clojure.tools.logging :as log]
             [clj-http.client :as client]
@@ -51,9 +51,6 @@
     (let [stopper (chan)]
       (go-loop []
         (alt!
-          new-tasks ([task _]
-                     (postfn (str api-url "/tasks") task)
-                     (recur))
           (schedule) ([_ _]
                       (let [tasks (remote-tasks component)]
                         (delete-completed component tasks)
@@ -62,6 +59,15 @@
                         (onto-chan tasks-from-diego tasks false)
                         (recur)))
           stopper :stopped))
+      (go-loop []
+        (when-let [task (<! new-tasks)]
+          (if (:task_guid task)
+            (do
+              (log/info "POSTing to diego:" (:task_guid task))
+              (postfn (str api-url "/tasks") task))
+            (log/error "Got a bad task:" task))
+          (recur)))
+
       (assoc component :stopper stopper)))
   (stop [component]
     (when stopper (put! stopper :please-stop))
