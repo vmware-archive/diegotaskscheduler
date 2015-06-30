@@ -13,11 +13,11 @@
   (map (fn [[_ name value]] {:name name :value value})
        (re-seq #"(\S+)=(\S+)" (or s ""))))
 
-(defn create-task [{:keys [domain guid rootfs path
+(defn create-task [{:keys [domain guid log_guid rootfs path
                            args env dir result-file]}]
   {:domain domain
    :task_guid guid
-   :log_guid guid
+   :log_guid log_guid
    :stack "lucid64"
    :privileged false
    :rootfs rootfs

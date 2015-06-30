@@ -18,9 +18,11 @@
   (go-loop []
     (when-let [{[id event-data] :event} (<! web-client)]
       (when (= "diegotaskscheduler" (namespace id))
-        (let [{:keys [args dir domain docker-image env path result-file]} event-data
+        (let [{:keys [args dir domain docker-image env log-guid
+                      path result-file]} event-data
               guid (str (UUID/randomUUID))
               task (d/create-task {:guid guid
+                                   :log_guid log-guid
                                    :dir dir
                                    :domain domain
                                    :rootfs docker-image

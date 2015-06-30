@@ -10,6 +10,7 @@
 
 (def new-task
   (atom {:domain "task-scheduler"
+         :log-guid "task"
          :docker-image "docker:///camelpunch/s3copier"
          :path "/app/run.sh"
          :dir "/app"
@@ -132,6 +133,7 @@
     [:div.section-ctr
      [:h2.sub-heading "Controls"]
      (input new-task :domain "Domain")
+     (input new-task :log-guid "Log GUID")
      (input new-task :docker-image "Docker image")
      (input new-task :path "Path to executable")
      (input new-task :args "Arguments")
