@@ -11,12 +11,12 @@
 (def new-task
   (atom {:domain "task-scheduler"
          :log-guid "task"
-         :docker-image "docker:///camelpunch/s3copier"
-         :path "/app/run.sh"
+         :docker-image "docker:///cdavisafc/sleepd5"
+         :path "ruby"
          :dir "/app"
-         :args "lattices3cp-source/commonpeople.jpg lattices3cp-destination/acommoncopy.jpg"
-         :result-file "/tmp/result_file"
-         :env "AWS_ACCESS_KEY_ID=blah AWS_SECRET_ACCESS_KEY=likeidtellyouplz"
+         :args "app.rb 1"
+         :result-file ""
+         :env ""
          :quantity 1}))
 
 (defonce tasks (atom {:pending []
