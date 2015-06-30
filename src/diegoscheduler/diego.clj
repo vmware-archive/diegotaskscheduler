@@ -19,7 +19,7 @@
    :task_guid guid
    :log_guid log_guid
    :stack "lucid64"
-   :privileged false
+   :privileged true
    :rootfs rootfs
    :action {:run {:path path
                   :args (s/split args #" ")}}
