@@ -38,7 +38,8 @@
     (case (:state task-update)
       "COMPLETED" :successful
       "RUNNING" :running
-      "PENDING" :pending)))
+      "PENDING" :pending
+      "QUEUED" :queued)))
 
 (defn add-new-state [m task-update]
   (update-in m [(state-of task-update)] conj task-update))
@@ -138,9 +139,9 @@
      (input new-task :env "ENV")
      (input new-task :result-file "Result file")
      [:button.btn {:on-click upload-task} "Add Task"]]]
-   (section :pending "Pending" {:task_guid "GUID"
-                                :domain "Domain"
-                                :rootfs "Docker image"})
+   (section :queued "Queued" {:task_guid "GUID"
+                              :domain "Domain"
+                              :rootfs "Docker image"})
    (section :running "Running" {:task_guid "GUID"
                                 :domain "Domain"
                                 :rootfs "Docker image"})

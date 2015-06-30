@@ -45,11 +45,14 @@ body {
     font-size: 10px;
     overflow: hidden;
 }
-.section.pending .section-ctr {
+.section.queued .section-ctr {
     border-color: orange;
 }
 .section.running .section-ctr {
     border-color: blue;
+}
+.section.successful {
+    clear: left;
 }
 .section.successful .section-ctr {
     border-color: #0c0;
