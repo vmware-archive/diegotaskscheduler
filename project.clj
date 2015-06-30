@@ -5,7 +5,7 @@
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
   :dependencies [[org.clojure/clojure "1.7.0-RC1"]
-                 [org.danielsz/system "0.1.4"]
+                 [org.danielsz/system "0.1.8"]
                  [environ "1.0.0"]
                  [http-kit "2.1.18"]
                  [clj-http "1.1.2" :exclusions [org.clojure/tools.reader]]
