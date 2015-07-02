@@ -51,11 +51,11 @@ A manifest.yml is prepared for you in the repo. You just need to build the JAR a
 
 ```sh
 cf push -n mysubdomain
-cf set-env taskscheduler API_URL=http://receptor.123.123.123.123.xip.io/v1
+cf set-env taskscheduler API_URL=http://user:pass@receptor.123.123.123.123.xip.io/v1
 cf set-env taskscheduler WS_URL=wss://mysubdomain.cfapps.io:4443/ws
 cf restage taskscheduler
 ```
 
-Where 123.123.123.123 is the IP of your lattice brain.
+Where 123.123.123.123 is the IP of your lattice brain. While 'user' and 'pass' *are* the default credentials for lattice, I hope you changed them before deploying!
 
 http://mysubdomain.cfapps.io should now be running.
