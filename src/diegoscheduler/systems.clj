@@ -29,8 +29,8 @@
 
 (defn- completed?
   [t]
-  (comp (= "COMPLETED" (:status t))
-        (complement capacity-failure?)))
+  (and (= "COMPLETED" (:state t))
+       ((complement capacity-failure?) t)))
 
 (def set-as-queued
   (map #(merge % {:state "QUEUED"})))
