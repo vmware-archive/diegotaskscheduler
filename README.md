@@ -16,6 +16,7 @@ brew install leiningen
 From the project directory, run the following to compile JavaScript:
 
 ```sh
+lein clean # optional, but always run this after a 'lein uberjar' to avoid strange failures
 lein repl
 ```
 
