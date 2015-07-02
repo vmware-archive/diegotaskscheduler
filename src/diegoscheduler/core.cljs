@@ -19,10 +19,11 @@
          :env ""
          :quantity 1}))
 
-(defonce tasks (atom {:pending []
-                      :running []
-                      :successful []
-                      :failed []}))
+(defonce app-state (atom {:rate 0
+                          :tasks {:pending []
+                                  :running []
+                                  :successful []
+                                  :failed []}}))
 (def uploads (chan))
 
 (defn same-guid-as [m]
@@ -48,12 +49,16 @@
 
 (defn handle-task-update [m task-update]
   (-> m
-      (remove-old-state task-update)
-      (add-new-state task-update)))
+      (update-in [:tasks] remove-old-state task-update)
+      (update-in [:tasks] add-new-state task-update)))
 
 (defn handle-task [task-update]
   (println (:state task-update) (:task_guid task-update))
-  (swap! tasks handle-task-update task-update))
+  (swap! app-state handle-task-update task-update))
+
+(defn handle-rate
+  [r]
+  (swap! app-state assoc :rate r))
 
 (defn chsk-url-fn
   [path {:as window-location :keys [host pathname]} websocket?]
@@ -69,12 +74,17 @@
   (def chsk-send! send-fn)
   (def chsk-state state))
 
+(def handlers
+  {:diegotaskscheduler/rate handle-rate
+   :diegotaskscheduler/task handle-task})
+
 (set! (.-onload js/window)
       (fn []
         (go-loop []
           (when-let [{[id event-data] :event} (<! ch-chsk)]
             (when (= :chsk/recv id)
-              (handle-task (second event-data)))
+              (let [[event data] event-data]
+                ((event handlers) data)))
             (recur)))))
 
 (defn upload-task []
@@ -120,16 +130,16 @@
           (table-division keyfn k t))])]]])
 
 (defn section [state title task-attrs]
-  (let [num-tasks (count (state @tasks))]
+  (let [num-tasks (count (state (:tasks @app-state)))]
     [:div
      {:class (str "section " (name state) " numtasks" num-tasks)}
      [:div.section-ctr
       [:h2.sub-heading (str title " (" num-tasks ")")]
-      (table state @tasks task-attrs)]]))
+      (table state (:tasks @app-state) task-attrs)]]))
 
 (defn page []
   [:div.container
-   [:h1.heading "Task Scheduler"]
+   [:h1.heading (str "Task Scheduler (" (:rate @app-state) " completed/s)")]
    [:div.fw-section
     [:div.section-ctr
      [:h2.sub-heading "Controls"]

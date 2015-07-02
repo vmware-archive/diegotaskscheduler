@@ -42,7 +42,7 @@
     (handle-new-tasks new-tasks ch-recv)
     (go-loop []
       (when-let [task-update (<! client-pushes)]
-        (send-fn :sente/all-users-without-uid [:diegotaskscheduler/task task-update])
+        (send-fn :sente/all-users-without-uid task-update)
         (recur)))
     (routes
      (GET "/"      []    {:status 200 :body (pages/index {:ws-url ws-url})})
