@@ -1,10 +1,10 @@
 (ns diegoscheduler.core
   (:require
    [reagent.core :as reagent :refer [atom]]
-   [cljs.core.async :refer [<! >! put! close! chan]]
+   [cljs.core.async :as a :refer [<! >! put! close! chan]]
    [clojure.string :refer [join split]]
    [taoensso.sente :as sente :refer [cb-success?]])
-  (:require-macros [cljs.core.async.macros :refer [go go-loop]]))
+  (:require-macros [cljs.core.async.macros :refer [alt! go go-loop]]))
 
 (enable-console-print!)
 
@@ -66,11 +66,16 @@
     js/window.wsUrl
     (str "//" host (or path pathname))))
 
+(defn app-event? [{[id event-data] :event}]
+  (= :chsk/recv id))
+
 (let [{:keys [chsk ch-recv send-fn state]}
       (sente/make-channel-socket! "/ws" {:type :auto
-                                         :chsk-url-fn chsk-url-fn})]
+                                         :chsk-url-fn chsk-url-fn})
+      [app-ch socket-ch] (a/split app-event? ch-recv)]
   (def chsk chsk)
-  (def ch-chsk ch-recv)
+  (def app-events app-ch)
+  (def socket-events socket-ch)
   (def chsk-send! send-fn)
   (def chsk-state state))
 
@@ -81,11 +86,13 @@
 (set! (.-onload js/window)
       (fn []
         (go-loop []
-          (when-let [{[id event-data] :event} (<! ch-chsk)]
-            (when (= :chsk/recv id)
-              (let [[event data] event-data]
-                ((event handlers) data)))
-            (recur)))))
+          (alt!
+            app-events      ([{[id event-data] :event} _]
+                             (let [[event data] event-data]
+                               ((event handlers) data))
+                             (recur))
+            socket-events   ([_ _]
+                             (recur))))))
 
 (defn upload-task []
   (chsk-send! [:diegotaskscheduler/task @new-task]))
