@@ -1,7 +1,7 @@
 (ns diegoscheduler.core
   (:require
    [reagent.core :as reagent :refer [atom]]
-   [cljs.core.async :as a :refer [<! >! put! close! chan]]
+   [cljs.core.async :as a :refer [<! >! chan close! pub put! sub]]
    [clojure.string :refer [join split]]
    [taoensso.sente :as sente :refer [cb-success?]])
   (:require-macros [cljs.core.async.macros :refer [alt! go go-loop]]))
@@ -53,12 +53,8 @@
       (update-in [:states] add-new-state task-update)))
 
 (defn handle-task [task-update]
-  (println (:state task-update) (:task_guid task-update))
-  (swap! app-state handle-task-update task-update))
 
-(defn handle-rate
-  [r]
-  (swap! app-state assoc :rate r))
+  (swap! app-state handle-task-update task-update))
 
 (defn chsk-url-fn
   [path {:as window-location :keys [host pathname]} websocket?]
@@ -66,33 +62,68 @@
     js/window.wsUrl
     (str "//" host (or path pathname))))
 
-(defn app-event? [{[id event-data] :event}]
-  (= :chsk/recv id))
+(def events
+  {:pending (chan)
+   :queued (chan)
+   :running (chan)
+   :successful (chan)
+   :failed (chan)
+   :rate (chan)
+   :socket (chan)})
+
+(defn task-topic
+  [{[id [event data]] :event :as e}]
+  (state-of data))
+
+(defn app-topic
+  [{[id [event data]] :event :as e}]
+  (if (= :diegotaskscheduler/rate event)
+    :rate
+    (task-topic e)))
+
+(defn topic
+  [{[id event-data] :event :as e}]
+  (if (= :chsk/recv id)
+    (app-topic e)
+    :connection))
 
 (let [{:keys [chsk ch-recv send-fn state]}
       (sente/make-channel-socket! "/ws" {:type :auto
                                          :chsk-url-fn chsk-url-fn})
-      [app-ch socket-ch] (a/split app-event? ch-recv)]
+      publication (pub ch-recv topic)]
+  (sub publication :queued (:queued events))
+  (sub publication :running (:running events))
+  (sub publication :successful (:successful events))
+  (sub publication :failed (:failed events))
+  (sub publication :rate (:rate events))
   (def chsk chsk)
-  (def app-events app-ch)
-  (def socket-events socket-ch)
   (def chsk-send! send-fn)
   (def chsk-state state))
-
-(def handlers
-  {:diegotaskscheduler/rate handle-rate
-   :diegotaskscheduler/task handle-task})
 
 (set! (.-onload js/window)
       (fn []
         (go-loop []
           (alt!
-            app-events      ([{[id event-data] :event} _]
-                             (let [[event data] event-data]
-                               ((event handlers) data))
-                             (recur))
-            socket-events   ([_ _]
-                             (recur))))))
+            (:queued events)     ([{[_ [_ task]] :event} _]
+                                  (println (:state task) (:task_guid task))
+                                  (handle-task task)
+                                  (recur))
+            (:running events)    ([{[_ [_ task]] :event} _]
+                                  (println (:state task) (:task_guid task))
+                                  (handle-task task)                                  
+                                  (recur))
+            (:successful events) ([{[_ [_ task]] :event} _]
+                                  (println (:state task) (:task_guid task))
+                                  (handle-task task)                                  
+                                  (recur))
+            (:failed events)     ([{[_ [_ task]] :event} _]
+                                  (println (:state task) (:task_guid task))
+                                  (handle-task task)                                  
+                                  (recur))
+            (:rate events)       ([{[_ [_ rate]] :event} _]
+                                  (swap! app-state assoc :rate rate)
+                                  (recur))
+            ))))
 
 (defn upload-task []
   (chsk-send! [:diegotaskscheduler/task @new-task]))
