@@ -1,10 +1,10 @@
 (ns diegoscheduler.core
-    (:require
-     [reagent.core :as reagent :refer [atom]]
-     [cljs.core.async :refer [<! >! put! close! chan]]
-     [clojure.string :refer [join split]]
-     [taoensso.sente :as sente :refer [cb-success?]])
-    (:require-macros [cljs.core.async.macros :refer [go go-loop]]))
+  (:require
+   [reagent.core :as reagent :refer [atom]]
+   [cljs.core.async :refer [<! >! put! close! chan]]
+   [clojure.string :refer [join split]]
+   [taoensso.sente :as sente :refer [cb-success?]])
+  (:require-macros [cljs.core.async.macros :refer [go go-loop]]))
 
 (enable-console-print!)
 
