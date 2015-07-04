@@ -53,7 +53,6 @@
       (update-in [:states] add-new-state task-update)))
 
 (defn handle-task [task-update]
-
   (swap! app-state handle-task-update task-update))
 
 (defn chsk-url-fn
@@ -62,14 +61,16 @@
     js/window.wsUrl
     (str "//" host (or path pathname))))
 
+(def extract-data
+  (map (fn [{[_ [_ data]] :event}] data)))
+
 (def events
-  {:pending (chan)
-   :queued (chan)
-   :running (chan)
-   :successful (chan)
-   :failed (chan)
-   :rate (chan)
-   :socket (chan)})
+  {:pending (chan 1 extract-data)
+   :queued (chan 1 extract-data)
+   :running (chan 1 extract-data)
+   :successful (chan 1 extract-data)
+   :failed (chan 1 extract-data)
+   :rate (chan 1 extract-data)})
 
 (defn task-topic
   [{[id [event data]] :event :as e}]
@@ -91,11 +92,8 @@
       (sente/make-channel-socket! "/ws" {:type :auto
                                          :chsk-url-fn chsk-url-fn})
       publication (pub ch-recv topic)]
-  (sub publication :queued (:queued events))
-  (sub publication :running (:running events))
-  (sub publication :successful (:successful events))
-  (sub publication :failed (:failed events))
-  (sub publication :rate (:rate events))
+  (doseq [[tpc c] events]
+    (sub publication tpc c))
   (def chsk chsk)
   (def chsk-send! send-fn)
   (def chsk-state state))
@@ -104,23 +102,23 @@
       (fn []
         (go-loop []
           (alt!
-            (:queued events)     ([{[_ [_ task]] :event} _]
+            (:queued events)     ([task _]
                                   (println (:state task) (:task_guid task))
                                   (handle-task task)
                                   (recur))
-            (:running events)    ([{[_ [_ task]] :event} _]
+            (:running events)    ([task _]
                                   (println (:state task) (:task_guid task))
                                   (handle-task task)                                  
                                   (recur))
-            (:successful events) ([{[_ [_ task]] :event} _]
+            (:successful events) ([task _]
                                   (println (:state task) (:task_guid task))
                                   (handle-task task)                                  
                                   (recur))
-            (:failed events)     ([{[_ [_ task]] :event} _]
+            (:failed events)     ([task _]
                                   (println (:state task) (:task_guid task))
                                   (handle-task task)                                  
                                   (recur))
-            (:rate events)       ([{[_ [_ rate]] :event} _]
+            (:rate events)       ([rate _]
                                   (swap! app-state assoc :rate rate)
                                   (recur))
             ))))
