@@ -20,10 +20,10 @@
          :quantity 1}))
 
 (defonce app-state (atom {:rate 0
-                          :tasks {:pending []
-                                  :running []
-                                  :successful []
-                                  :failed []}}))
+                          :states {:pending []
+                                   :running []
+                                   :successful []
+                                   :failed []}}))
 (def uploads (chan))
 
 (defn same-guid-as [m]
@@ -49,8 +49,8 @@
 
 (defn handle-task-update [m task-update]
   (-> m
-      (update-in [:tasks] remove-old-state task-update)
-      (update-in [:tasks] add-new-state task-update)))
+      (update-in [:states] remove-old-state task-update)
+      (update-in [:states] add-new-state task-update)))
 
 (defn handle-task [task-update]
   (println (:state task-update) (:task_guid task-update))
@@ -130,12 +130,12 @@
           (table-division keyfn k t))])]]])
 
 (defn section [state title task-attrs]
-  (let [num-tasks (count (state (:tasks @app-state)))]
+  (let [num-tasks (count (state (:states @app-state)))]
     [:div
      {:class (str "section " (name state) " numtasks" num-tasks)}
      [:div.section-ctr
       [:h2.sub-heading (str title " (" num-tasks ")")]
-      (table state (:tasks @app-state) task-attrs)]]))
+      (table state (:states @app-state) task-attrs)]]))
 
 (defn page []
   [:div.container
