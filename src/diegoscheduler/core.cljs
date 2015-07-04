@@ -65,12 +65,9 @@
   (map (fn [{[_ [_ data]] :event}] data)))
 
 (def events
-  {:pending (chan 1 extract-data)
-   :queued (chan 1 extract-data)
-   :running (chan 1 extract-data)
-   :successful (chan 1 extract-data)
-   :failed (chan 1 extract-data)
-   :rate (chan 1 extract-data)})
+  (into {}
+        (map (fn [type] {type (chan 1 extract-data)}))
+        [:pending :queued :running :successful :failed :rate]))
 
 (defn task-topic
   [{[id [event data]] :event :as e}]
