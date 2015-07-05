@@ -23,7 +23,8 @@
                           :states {:queued []
                                    :running []
                                    :successful []
-                                   :failed []}}))
+                                   :failed []}
+                          :do-not-run #{}}))
 (def uploads (chan))
 
 (defn same-guid-as [m]
@@ -47,17 +48,22 @@
 (defn add-new-state [m task-update]
   (update-in m [(state-of task-update)] conj task-update))
 
-(defn move-task [m task-update]
+(defn do-not-run
+  [m task]
+  (update-in m [:do-not-run] conj (:task_guid task)))
+
+(defn move-task
+  [m task-update]
   (-> m
+      (do-not-run task-update)
       (update-in [:states] remove-old-state task-update)
       (update-in [:states] add-new-state task-update)))
 
 (defn now-running
   [m task]
-  (let [existing (flatten ((juxt :running :successful :failed) (:states m)))]
-    (if (some #{(:task_guid task)} (map :task_guid existing))
-      m
-      (move-task m task))))
+  (if (some #{(:task_guid task)} (:do-not-run m))
+    m
+    (move-task m task)))
 
 (defn chsk-url-fn
   [path {:as window-location :keys [host pathname]} websocket?]
