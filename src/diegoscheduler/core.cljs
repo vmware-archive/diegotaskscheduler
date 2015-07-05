@@ -25,7 +25,6 @@
                                    :successful []
                                    :failed []}
                           :do-not-run #{}}))
-(def uploads (chan))
 
 (defn same-guid-as [m]
   #(= (:task_guid m) (:task_guid %)))
@@ -130,14 +129,17 @@
                                   (recur))
             ))))
 
-(defn upload-task []
+(defn upload-task
+  []
   (chsk-send! [:diegotaskscheduler/task @new-task]))
 
-(defn event-update [a attr]
+(defn event-update
+  [a attr]
   (fn [e]
     (swap! a #(assoc % attr (-> e .-target .-value)))))
 
-(defn input [a key label]
+(defn input
+  [a key label]
   (let [id (str "task-" (name key))]
     [:p.form-control
      [:label.lbl {:for id} label]
@@ -146,12 +148,14 @@
                    :value (key (deref a))
                    :on-change (event-update a key)}]]))
 
-(defn short-cmd [t]
+(defn short-cmd
+  [t]
   (let [run (get-in t [:action :run])]
     (join " " (cons (-> (:path run) (split #"/") last)
                     (:args run)))))
 
-(defn table-division [keyfn k t]
+(defn table-division
+  [keyfn k t]
   [:td.tbldv {:key (str keyfn k)}
    (case k
      :created_at (.toTimeString (js/Date. (/ (:created_at t) 1000000)))
@@ -159,7 +163,8 @@
      :cmd (short-cmd t)
      (k t))])
 
-(defn table [keyfn coll fields]
+(defn table
+  [keyfn coll fields]
   [:div.tblctr
    [:table
     [:thead
@@ -172,7 +177,8 @@
         (for [k (keys fields)]
           (table-division keyfn k t))])]]])
 
-(defn section [state title task-attrs]
+(defn section
+  [state title task-attrs]
   (let [num-tasks (count (state (:states @app-state)))]
     [:div
      {:class (str "section " (name state) " numtasks" num-tasks)}
@@ -180,7 +186,8 @@
       [:h2.sub-heading (str title " (" num-tasks ")")]
       (table state (:states @app-state) task-attrs)]]))
 
-(defn page []
+(defn page
+  []
   [:div.container
    [:h1.heading (str "Task Scheduler (" (:rate @app-state) " completed/s)")]
    [:div.fw-section
