@@ -20,7 +20,7 @@
          :quantity 1}))
 
 (defonce app-state (atom {:rate 0
-                          :states {:pending []
+                          :states {:queued []
                                    :running []
                                    :successful []
                                    :failed []}}))
@@ -47,13 +47,17 @@
 (defn add-new-state [m task-update]
   (update-in m [(state-of task-update)] conj task-update))
 
-(defn handle-task-update [m task-update]
+(defn move-task [m task-update]
   (-> m
       (update-in [:states] remove-old-state task-update)
       (update-in [:states] add-new-state task-update)))
 
-(defn handle-task [task-update]
-  (swap! app-state handle-task-update task-update))
+(defn now-running
+  [m task]
+  (let [existing (flatten ((juxt :running :successful :failed) (:states m)))]
+    (if (some #{(:task_guid task)} (map :task_guid existing))
+      m
+      (move-task m task))))
 
 (defn chsk-url-fn
   [path {:as window-location :keys [host pathname]} websocket?]
@@ -67,7 +71,7 @@
 (def events
   (into {}
         (map (fn [type] {type (chan 1 extract-data)}))
-        [:pending :queued :running :successful :failed :rate]))
+        [:queued :running :successful :failed :rate]))
 
 (defn task-topic
   [{[id [event data]] :event :as e}]
@@ -100,20 +104,20 @@
         (go-loop []
           (alt!
             (:queued events)     ([task _]
-                                  (println (:state task) (:task_guid task))
-                                  (handle-task task)
+                                  (println "Queued:" (:task_guid task))
+                                  (swap! app-state update-in [:states] add-new-state task)
                                   (recur))
             (:running events)    ([task _]
-                                  (println (:state task) (:task_guid task))
-                                  (handle-task task)                                  
+                                  (println "Running:" (:task_guid task))
+                                  (swap! app-state now-running task)
                                   (recur))
             (:successful events) ([task _]
-                                  (println (:state task) (:task_guid task))
-                                  (handle-task task)                                  
+                                  (println "Successful:" (:task_guid task))
+                                  (swap! app-state move-task task)
                                   (recur))
             (:failed events)     ([task _]
-                                  (println (:state task) (:task_guid task))
-                                  (handle-task task)                                  
+                                  (println "Failed:" (:task_guid task))
+                                  (swap! app-state move-task task)
                                   (recur))
             (:rate events)       ([rate _]
                                   (swap! app-state assoc :rate rate)
