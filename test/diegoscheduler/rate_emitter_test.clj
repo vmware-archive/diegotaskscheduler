@@ -21,7 +21,7 @@
       (>!! completed-tasks {})
       (>!! completed-tasks {})
       (>!! tick :now)
-      (is (= 2.5 (<!! rate))) ;; inaccurate on first, no biggie
+      (is (= 2.5 (<!! rate)))
       (>!! completed-tasks {})
       (>!! tick :now)
       (is (= 3.0 (<!! rate)))
