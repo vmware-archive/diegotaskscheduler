@@ -26,16 +26,19 @@
                                    :failed []}
                           :do-not-run #{}}))
 
-(defn same-guid-as [m]
+(defn same-guid-as
+  [m]
   #(= (:task_guid m) (:task_guid %)))
 
-(defn remove-old-state [m task-update]
+(defn remove-old-state
+  [m task-update]
   (reduce (fn [acc [state tasks]]
             (merge acc
                    {state (vec (remove (same-guid-as task-update) tasks))}))
           {} m))
 
-(defn state-of [task-update]
+(defn state-of
+  [task-update]
   (if (:failed task-update)
     :failed
     (case (:state task-update)
@@ -44,7 +47,8 @@
       "PENDING" :pending
       "QUEUED" :queued)))
 
-(defn add-new-state [m task-update]
+(defn add-new-state
+  [m task-update]
   (update-in m [(state-of task-update)] conj task-update))
 
 (defn do-not-run
