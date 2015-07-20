@@ -1,6 +1,6 @@
 (defproject diegoscheduler "0.2.1-SNAPSHOT"
-  :description "FIXME: write this!"
-  :url "http://example.com/FIXME"
+  :description "Experimental task scheduler for Diego"
+  :url "https://github.com/pivotal-cf-experimental/diegotaskscheduler"
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
 
