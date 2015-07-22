@@ -29,4 +29,6 @@
   (testing "Success"
     (is (= "http://eu.httpbin.org/delete"
            (let [[_ result] (DELETE "http://eu.httpbin.org/delete")]
-             (result :url))))))
+             (result :url)))))
+  (testing "Not Found"
+    (is (= ["Not Found" nil] (DELETE "http://www.andrewbruce.net/a-non-existent-place")))))
