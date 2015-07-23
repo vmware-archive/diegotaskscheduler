@@ -32,9 +32,10 @@
    :disk_mb 1000
    :memory_mb 1000})
 
-(defn remote-tasks
-  [{getfn :getfn api-url :api-url}]
-  (let [[error, result] (getfn (str api-url "/tasks"))]
+(defn remote-resources
+  [type
+   {getfn :getfn api-url :api-url}]
+  (let [[error, result] (getfn (str api-url "/" type))]
     (if error
       (log/error error)
       result)))

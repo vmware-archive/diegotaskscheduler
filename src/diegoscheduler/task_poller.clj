@@ -14,7 +14,7 @@
       (go-loop []
         (alt!
           (schedule) ([_ _]
-                      (let [tasks (d/remote-tasks component)]
+                      (let [tasks (d/remote-resources "tasks" component)]
                         (d/delete-completed component tasks)
                         (doseq [t tasks]
                           (log/info (:state t) (:task_guid t)))
