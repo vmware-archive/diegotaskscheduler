@@ -4,10 +4,11 @@
             [clojure.tools.logging :as log]
             [diegoscheduler.diego :as d]))
 
-(defrecord TaskPoller [tasks-from-diego schedule
-                       getfn deletefn
-                       api-url
-                       stopper]
+(defrecord TaskPoller
+    [tasks-from-diego schedule
+     getfn deletefn
+     api-url
+     stopper]
   component/Lifecycle
   (start [component]
     (let [stopper (chan)]
