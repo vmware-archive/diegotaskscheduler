@@ -1,6 +1,6 @@
 (ns diegoscheduler.task-poller
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [put! <! >! chan alt! go-loop onto-chan]]
+            [clojure.core.async :refer [put! chan alt! go-loop onto-chan]]
             [clojure.tools.logging :as log]
             [diegoscheduler.diego :as d]))
 

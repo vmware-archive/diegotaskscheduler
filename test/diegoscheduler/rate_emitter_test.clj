@@ -1,7 +1,7 @@
 (ns diegoscheduler.rate-emitter-test
   (:require [diegoscheduler.rate-emitter :refer [new-rate-emitter]]
             [clojure.test :refer :all]
-            [clojure.core.async :refer [go chan close! >! <! >!! <!!]]
+            [clojure.core.async :refer [chan >!! <!!]]
             [com.stuartsierra.component :refer [start stop]]))
 
 (deftest rate-emitting

@@ -4,6 +4,7 @@
             [clojure.tools.logging :as log]
             [environ.core :refer [env]]
             [diegoscheduler.http :as http]
+            [diegoscheduler.cell-poller :refer [new-cell-poller]]
             [diegoscheduler.rate-emitter :refer [new-rate-emitter]]
             [diegoscheduler.resubmitter :refer [new-resubmitter]]
             [diegoscheduler.task-poller :refer [new-task-poller]]
@@ -55,6 +56,8 @@
         user-submissions-for-diego (chan)
         user-submissions-for-resubmitter (chan) ; resubmitter needs to look up original tasks
 
+        cells-from-diego (chan 1 (tag-all :diegotaskscheduler/cell-quantity))
+
         tasks-from-diego-input (chan)
         tasks-from-diego-mult (mult tasks-from-diego-input)
         capacity-failures-from-diego (chan 1 (filter capacity-failure?))
@@ -63,7 +66,10 @@
         rate-of-completion (chan 1 (tag-all :diegotaskscheduler/rate))
 
         tasks-for-ui (chan 1 (tag-all :diegotaskscheduler/task))
-        ui-updates (async/merge [tasks-for-ui tasks-enqueued rate-of-completion])
+        ui-updates (async/merge [tasks-for-ui
+                                 tasks-enqueued
+                                 rate-of-completion
+                                 cells-from-diego])
 
         poll-schedule (fn [] (timeout update-interval))
         rate-schedule (fn [] (timeout rate-denominator))]
@@ -80,18 +86,25 @@
     (pipe resubmit-as-new-tasks new-tasks-input)
 
     (component/system-map
+     :cell-poller    (new-cell-poller    cells-from-diego
+                                         rate-schedule
+                                         http/GET
+                                         api-url)
      :task-submitter (new-task-submitter user-submissions-for-diego
                                          http/POST
                                          api-url)
-     :task-poller (new-task-poller tasks-from-diego-input
-                                   poll-schedule
-                                   http/GET http/DELETE
-                                   api-url)
-     :resubmitter (new-resubmitter capacity-failures-from-diego
-                                   tasks-ready-for-resubmission
-                                   user-submissions-for-resubmitter)
-     :rate-emitter (new-rate-emitter completed-tasks rate-of-completion rate-schedule rate-window)
-     :web (new-web-server new-tasks-input ui-updates port ws-url))))
+     :task-poller    (new-task-poller    tasks-from-diego-input
+                                         poll-schedule
+                                         http/GET http/DELETE
+                                         api-url)
+     :resubmitter    (new-resubmitter    capacity-failures-from-diego
+                                         tasks-ready-for-resubmission
+                                         user-submissions-for-resubmitter)
+     :rate-emitter   (new-rate-emitter   completed-tasks
+                                         rate-of-completion
+                                         rate-schedule
+                                         rate-window)
+     :web            (new-web-server     new-tasks-input ui-updates port ws-url))))
 
 (defn -main
   []

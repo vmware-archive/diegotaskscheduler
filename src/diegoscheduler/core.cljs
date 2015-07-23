@@ -20,6 +20,7 @@
          :quantity 1}))
 
 (defonce app-state (atom {:rate 0
+                          :cell-quantity 0
                           :states {:queued []
                                    :running []
                                    :successful []
@@ -78,22 +79,26 @@
   (map (fn [{[_ [_ data]] :event}] data)))
 
 (def events
+  "Map of type keywords to channels that automatically extract the
+  data portion of a sente event"
   (into {}
         (map (fn [type] {type (chan 1 extract-data)}))
-        [:queued :running :successful :failed :rate]))
+        [:queued :running :successful :failed :rate :cell-quantity]))
 
 (defn task-topic
-  [{[id [event data]] :event :as e}]
+  [{[_ [_ data]] :event}]
   (state-of data))
 
 (defn app-topic
-  [{[id [event data]] :event :as e}]
-  (if (= :diegotaskscheduler/rate event)
-    :rate
+  [{[_ [event-type _]] :event :as e}]
+  (case event-type
+    :diegotaskscheduler/rate :rate
+    :diegotaskscheduler/cell-quantity :cell-quantity
     (task-topic e)))
 
 (defn topic
-  [{[id event-data] :event :as e}]
+  "Return topic keyword for a given sente event"
+  [{[id _] :event :as e}]
   (if (= :chsk/recv id)
     (app-topic e)
     :connection))
@@ -112,25 +117,29 @@
       (fn []
         (go-loop []
           (alt!
-            (:queued events)     ([task _]
-                                  (println "Queued:" (:task_guid task))
-                                  (swap! app-state update-in [:states] add-new-state task)
-                                  (recur))
-            (:running events)    ([task _]
-                                  (println "Running:" (:task_guid task))
-                                  (swap! app-state now-running task)
-                                  (recur))
-            (:successful events) ([task _]
-                                  (println "Successful:" (:task_guid task))
-                                  (swap! app-state move-task task)
-                                  (recur))
-            (:failed events)     ([task _]
-                                  (println "Failed:" (:task_guid task))
-                                  (swap! app-state move-task task)
-                                  (recur))
-            (:rate events)       ([rate _]
-                                  (swap! app-state assoc :rate rate)
-                                  (recur))
+            (:queued events)        ([task _]
+                                     (println "Queued:" (:task_guid task))
+                                     (swap! app-state
+                                            update-in [:states] add-new-state task)
+                                     (recur))
+            (:running events)       ([task _]
+                                     (println "Running:" (:task_guid task))
+                                     (swap! app-state now-running task)
+                                     (recur))
+            (:successful events)    ([task _]
+                                     (println "Successful:" (:task_guid task))
+                                     (swap! app-state move-task task)
+                                     (recur))
+            (:failed events)        ([task _]
+                                     (println "Failed:" (:task_guid task))
+                                     (swap! app-state move-task task)
+                                     (recur))
+            (:rate events)          ([rate _]
+                                     (swap! app-state assoc :rate rate)
+                                     (recur))
+            (:cell-quantity events) ([x _]
+                                     (swap! app-state assoc :cell-quantity x)
+                                     (recur))
             ))))
 
 (defn upload-task
@@ -193,7 +202,11 @@
 (defn page
   []
   [:div.container
-   [:h1.heading (str "Task Scheduler (" (:rate @app-state) " completed/s)")]
+   [:h1.heading (str "Task Scheduler ("
+                     (:rate @app-state)
+                     " completed/s - "
+                     (:cell-quantity @app-state)
+                     " cells)")]
    [:div.fw-section
     [:div.section-ctr
      [:h2.sub-heading "Controls"]
