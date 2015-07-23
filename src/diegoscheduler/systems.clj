@@ -3,11 +3,12 @@
             [clojure.core.async :as async :refer [chan timeout split mult pipe tap]]
             [clojure.tools.logging :as log]
             [environ.core :refer [env]]
-            [diegoscheduler.web :refer [new-web-server]]
-            [diegoscheduler.diego :refer [new-diego]]
+            [diegoscheduler.http :as http]
             [diegoscheduler.rate-emitter :refer [new-rate-emitter]]
             [diegoscheduler.resubmitter :refer [new-resubmitter]]
-            [diegoscheduler.http :as http])
+            [diegoscheduler.task-poller :refer [new-task-poller]]
+            [diegoscheduler.task-submitter :refer [new-task-submitter]]
+            [diegoscheduler.web :refer [new-web-server]])
   (:gen-class))
 
 (def update-interval
@@ -79,10 +80,13 @@
     (pipe resubmit-as-new-tasks new-tasks-input)
 
     (component/system-map
-     :diego (new-diego user-submissions-for-diego
-                       tasks-from-diego-input poll-schedule
-                       http/GET http/POST http/DELETE
-                       api-url)
+     :task-submitter (new-task-submitter user-submissions-for-diego
+                                         http/POST
+                                         api-url)
+     :task-poller (new-task-poller tasks-from-diego-input
+                                   poll-schedule
+                                   http/GET http/DELETE
+                                   api-url)
      :resubmitter (new-resubmitter capacity-failures-from-diego
                                    tasks-ready-for-resubmission
                                    user-submissions-for-resubmitter)
