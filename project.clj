@@ -35,6 +35,11 @@
                    :env {:port 8081}}
              :uberjar {:main diegoscheduler.systems
                        :aot [diegoscheduler.diego
+                             diegoscheduler.cell-poller
+                             diegoscheduler.task-poller
+                             diegoscheduler.task-submitter
+                             diegoscheduler.rate-emitter
+                             diegoscheduler.resubmitter
                              diegoscheduler.http
                              diegoscheduler.pages
                              diegoscheduler.systems
