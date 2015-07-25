@@ -19,7 +19,8 @@
                  [leiningen "2.5.1"]
                  [org.clojure/tools.logging "0.3.1"]]
 
-  :plugins [[lein-environ "1.0.0"]]
+  :plugins [[lein-environ "1.0.0"]
+            [com.cemerick/clojurescript.test "0.3.3"]]
 
   :source-paths ["src"]
   :test-paths ["test"]
@@ -27,8 +28,7 @@
 
   :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.10"]
                                   [org.clojure/tools.namespace "0.2.10"]
-                                  [com.cemerick/piggieback "0.2.1"]
-                                  [com.cemerick/clojurescript.test "0.3.3"]]
+                                  [com.cemerick/piggieback "0.2.1"]]
                    :repl-options {:init-ns user
                                   :nrepl-middleware [cemerick.piggieback/wrap-cljs-repl]}
                    :source-paths ["dev_src"]

@@ -54,8 +54,12 @@
 
   (development-build)
   (production-build)
+
+  :cljs/quit
   (cemerick.piggieback/cljs-repl (cljs.repl.node/repl-env))
-  (cemerick.cljs.test/test-ns 'diegoscheduler.core-test)
+
+  (require 'diegoscheduler.charts-test)
+  (require 'cemerick.cljs.test)
 
   (:web system)
 
