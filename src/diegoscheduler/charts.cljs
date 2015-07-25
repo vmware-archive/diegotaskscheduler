@@ -4,14 +4,14 @@
   [coll end-time]
   (conj coll {:time (inc end-time)}))
 
-(defn multi-update
+(defn- multi-update
   [coll k & args]
   (reduce (fn [acc m]
             (conj acc (apply update-in m [k] args)))
           []
           coll))
 
-(defn ms-to-s
+(defn- ms-to-s
   [coll k]
   (multi-update coll k #(-> % (/ 1000) int)))
 

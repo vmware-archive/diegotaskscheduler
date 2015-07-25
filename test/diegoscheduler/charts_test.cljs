@@ -4,13 +4,6 @@
   (:require [cemerick.cljs.test :as t]
             [diegoscheduler.charts :as charts]))
 
-(deftest ms-to-s
-  (is (= [{:foo "bar" :time 10}
-          {:baz "qux" :time 20}]
-         (charts/ms-to-s [{:foo "bar" :time 10000}
-                          {:baz "qux" :time 20000}]
-                         :time))))
-
 (deftest data-manipulation
   (testing "raw data gets spread into a time series, in seconds, not millis"
     (is (= [{:time 10 :rate 0}
