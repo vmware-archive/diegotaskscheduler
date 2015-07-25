@@ -3,7 +3,8 @@
    [reagent.core :as reagent :refer [atom]]
    [cljs.core.async :as a :refer [<! >! chan close! pub put! sub]]
    [clojure.string :refer [join split]]
-   [taoensso.sente :as sente :refer [cb-success?]])
+   [taoensso.sente :as sente :refer [cb-success?]]
+   [diegoscheduler.charts :as charts])
   (:require-macros [cljs.core.async.macros :refer [alt! go go-loop]]))
 
 (enable-console-print!)
@@ -28,6 +29,7 @@
                           :do-not-run #{}}))
 
 (defonce chart-data (atom []))
+(defonce scale (atom 5))
 
 (defn rate-vs-cell
   [m]
@@ -35,16 +37,15 @@
 
 (defn current-time
   []
-  (-> (js/Date.)
-      .getTime))
+  (-> (js/Date.) .getTime))
 
 (add-watch app-state
            :chart-data
            (fn [key a old-state new-state]
              (when (not= (rate-vs-cell old-state) (rate-vs-cell new-state))
-               (println (swap! chart-data conj
-                               (merge (rate-vs-cell new-state)
-                                      {:time (current-time)}))))))
+               (swap! chart-data conj
+                      (merge (rate-vs-cell new-state)
+                             {:time (current-time)})))))
 
 (defn same-guid-as
   [m]
@@ -222,21 +223,46 @@
   [x]
   (.stringify js/JSON (clj->js x) nil 2))
 
-(defn data-link
+(defn data-attrs
   []
-  (let [data (str "text/json;charset=utf-8," (stringify @chart-data))
-        {:keys [rate cell-quantity]} @app-state]
-    [:a {:href (str "data:" data) :download "rate-vs-cells.json"}
-     (str rate " completed/s - " cell-quantity " cells")]))
+  (let [data (str "text/json;charset=utf-8," (stringify @chart-data))]
+    {:href (str "data:" data) :download "rate-vs-cells.json"}))
+
+(defn running-stats
+  []
+  (let [{:keys [rate cell-quantity]} @app-state]
+    [:span (str rate " completed/s - " cell-quantity " cells")]))
+
+(defn chart
+  []
+  (let [pairs (partition 2 1 (charts/fill-gaps @chart-data (/ (current-time) 1000)))
+        interval-x 5
+        multiplier @scale
+        height 100]
+    [:div.section-ctr
+     [:div {:style {:overflow "scroll"}}
+      [:svg {:style {:background "#ccc" :width "10000px" :height (str height "px")}}
+       (map-indexed (fn [idx [from to]]
+                      (let [x1 (* idx interval-x)
+                            y1 (- height (* multiplier (:rate from)))
+                            x2 (+ interval-x (* idx interval-x))
+                            y2 (- height (* multiplier (:rate to)))]
+                        [:line {:key (str idx (map :rate [from to]))
+                                :x1 x1 :y1 y1
+                                :x2 x2 :y2 y2
+                                :style {:stroke "#000"}}]))
+                    pairs)]]
+     [:a (data-attrs) "Download JSON"]]))
 
 (defn page
   []
   [:div.container
    [:h1.heading
     "Task Scheduler ("
-    [data-link]
+    [running-stats]
     ")"]
    [:div.fw-section
+    [chart]
     [:div.section-ctr
      [:h2.sub-heading "Controls"]
      (input new-task :domain "Domain")

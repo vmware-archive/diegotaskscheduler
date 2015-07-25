@@ -4,18 +4,26 @@
   (:require [cemerick.cljs.test :as t]
             [diegoscheduler.charts :as charts]))
 
+(deftest ms-to-s
+  (is (= [{:foo "bar" :time 10}
+          {:baz "qux" :time 20}]
+         (charts/ms-to-s [{:foo "bar" :time 10000}
+                          {:baz "qux" :time 20000}]
+                         :time))))
+
 (deftest data-manipulation
-  (testing "raw data gets spread into a time series"
+  (testing "raw data gets spread into a time series, in seconds, not millis"
     (is (= [{:time 10 :rate 0}
             {:time 11 :rate 0}
-            {:time 12 :rate 10}
-            {:time 13 :rate 10}
+            {:time 12 :rate 20} ; take last received rate inside second
+            {:time 13 :rate 20}
             {:time 14 :rate 5}
             {:time 15 :rate 5}
             {:time 16 :rate 5}]
-           (charts/fill-gaps [{:time 10 :rate 0}
-                              {:time 12 :rate 10}
-                              {:time 14 :rate 5}]
+           (charts/fill-gaps [{:time 10000 :rate 0}
+                              {:time 12000 :rate 10}
+                              {:time 12001 :rate 20}
+                              {:time 14000 :rate 5}]
                              16)))))
 
 (t/test-ns 'diegoscheduler.charts-test)
