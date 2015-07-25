@@ -254,7 +254,8 @@
                               :rootfs "Docker image"})
    (section :running "Running" {:task_guid "GUID"
                                 :domain "Domain"
-                                :rootfs "Docker image"})
+                                :rootfs "Docker image"
+                                :cell_id "Cell"})
    (section :successful "Successful" {:task_guid "GUID"
                                       :domain "Domain"
                                       :rootfs "Docker image"
