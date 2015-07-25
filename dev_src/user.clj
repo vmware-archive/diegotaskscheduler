@@ -14,7 +14,8 @@
 
 (def js-dir "resources/public/js")
 
-(defn development-build []
+(defn development-build
+  []
   (delete-file-recursively js-dir :silently)
   (js/build "src"
             {:main 'diegoscheduler.core
@@ -22,7 +23,17 @@
              :output-dir js-dir
              :asset-path "js"}))
 
-(defn production-build []
+(defn development-watch
+  []
+  (delete-file-recursively js-dir :silently)
+  (js/watch "src"
+            {:main 'diegoscheduler.core
+             :output-to (str js-dir "/application.js")
+             :output-dir js-dir
+             :asset-path "js"}))
+
+(defn production-build
+  []
   (delete-file-recursively js-dir :silently)
   (js/build "src"
             {:main 'diegoscheduler.core
