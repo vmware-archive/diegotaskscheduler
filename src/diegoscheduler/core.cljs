@@ -27,6 +27,25 @@
                                    :failed []}
                           :do-not-run #{}}))
 
+(defonce chart-data (atom []))
+
+(defn rate-vs-cell
+  [m]
+  (select-keys m [:cell-quantity :rate]))
+
+(defn current-time
+  []
+  (-> (js/Date.)
+      .getTime))
+
+(add-watch app-state
+           :chart-data
+           (fn [key a old-state new-state]
+             (when (not= (rate-vs-cell old-state) (rate-vs-cell new-state))
+               (println (swap! chart-data conj
+                               (merge (rate-vs-cell new-state)
+                                      {:time (current-time)}))))))
+
 (defn same-guid-as
   [m]
   #(= (:task_guid m) (:task_guid %)))
@@ -199,14 +218,24 @@
       [:h2.sub-heading (str title " (" num-tasks ")")]
       (table state (:states @app-state) task-attrs)]]))
 
+(defn stringify
+  [x]
+  (.stringify js/JSON (clj->js x) nil 2))
+
+(defn data-link
+  []
+  (let [data (str "text/json;charset=utf-8," (stringify @chart-data))
+        {:keys [rate cell-quantity]} @app-state]
+    [:a {:href (str "data:" data) :download "rate-vs-cells.json"}
+     (str rate " completed/s - " cell-quantity " cells")]))
+
 (defn page
   []
   [:div.container
-   [:h1.heading (str "Task Scheduler ("
-                     (:rate @app-state)
-                     " completed/s - "
-                     (:cell-quantity @app-state)
-                     " cells)")]
+   [:h1.heading
+    "Task Scheduler ("
+    [data-link]
+    ")"]
    [:div.fw-section
     [:div.section-ctr
      [:h2.sub-heading "Controls"]
