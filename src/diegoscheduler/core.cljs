@@ -238,21 +238,30 @@
   (let [pairs (partition 2 1 (charts/fill-gaps @chart-data (/ (current-time) 1000)))
         interval-x 5
         multiplier @scale
-        height 100]
+        height 100
+        colors {:rate "#000" :cell-quantity "#f00"}]
     [:div.section-ctr
      [:div {:style {:overflow "scroll"}}
       [:svg {:style {:background "#ccc" :width "10000px" :height (str height "px")}}
        (map-indexed (fn [idx [from to]]
                       (let [x1 (* idx interval-x)
-                            y1 (- height (* multiplier (:rate from)))
                             x2 (+ interval-x (* idx interval-x))
-                            y2 (- height (* multiplier (:rate to)))]
-                        [:line {:key (str idx (map :rate [from to]))
-                                :x1 x1 :y1 y1
-                                :x2 x2 :y2 y2
-                                :style {:stroke "#000"}}]))
+                            rate-y1 (- height (* multiplier (:rate from)))
+                            rate-y2 (- height (* multiplier (:rate to)))
+                            cells-y1 (- height (* multiplier (:cell-quantity from)))
+                            cells-y2 (- height (* multiplier (:cell-quantity to)))]
+                        [:g {:key (str "lines" idx)}
+                         [:line {:x1 x1 :y1 rate-y1
+                                 :x2 x2 :y2 rate-y2
+                                 :style {:stroke (colors :rate)}}]
+                         [:line {:x1 x1 :y1 cells-y1
+                                 :x2 x2 :y2 cells-y2
+                                 :style {:stroke (colors :cell-quantity)}}]]))
                     pairs)]]
-     [:a (data-attrs) "Download JSON"]]))
+     [:p.inl
+      [:a (data-attrs) "Download JSON"]]
+     [:p.inl {:style {:color (colors :cell-quantity)}} "Cells"]
+     [:p.inl {:style {:color (colors :rate)}} "Rate"]]))
 
 (defn page
   []

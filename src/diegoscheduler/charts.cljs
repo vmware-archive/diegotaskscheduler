@@ -1,5 +1,4 @@
 (ns diegoscheduler.charts)
-
 (defn- add-end-of-range
   [coll end-time]
   (conj coll {:time (inc end-time)}))
@@ -17,10 +16,10 @@
 
 (defn fill-gaps
   [coll end-time]
-  (reduce (fn [slots [{from-time :time from-rate :rate}
-                      {to-time :time to-rate :rate}]]
+  (reduce (fn [slots [{from-time :time from-rate :rate from-cell-quantity :cell-quantity}
+                      {  to-time :time   to-rate :rate   to-cell-quantity :cell-quantity}]]
             (into slots
                   (for [time (range from-time to-time)]
-                    {:time time :rate from-rate})))
+                    {:time time :rate from-rate :cell-quantity from-cell-quantity})))
           []
           (partition 2 1 (add-end-of-range (ms-to-s coll :time) end-time))))

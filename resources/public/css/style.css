@@ -73,3 +73,8 @@ body {
 .tbldv {
     padding-right: 10px;
 }
+.inl {
+    display: block;
+    float: left;
+    padding-right: 1em;
+}
