@@ -1,7 +1,5 @@
 (ns diegoscheduler.charts-test
-  (:require-macros [cemerick.cljs.test
-                    :refer [is deftest run-tests testing]])
-  (:require [cemerick.cljs.test :as t]
+  (:require [clojure.test :refer :all]
             [diegoscheduler.charts :as charts]))
 
 (deftest data-manipulation
@@ -19,5 +17,3 @@
                               {:time 12001 :rate 20 :cell-quantity 3}
                               {:time 14000 :rate 5  :cell-quantity 4}]
                              16)))))
-
-(t/test-ns 'diegoscheduler.charts-test)
