@@ -235,7 +235,10 @@
 
 (defn chart
   []
-  (let [pairs (partition 2 1 (charts/fill-gaps @chart-data (/ (current-time) 1000)))
+  (let [pairs (partition 2 1
+                         (-> @chart-data
+                             (charts/convert-all-ms-to-s :time)
+                             (charts/fill-gaps :time (/ (current-time) 1000))))
         interval-x 5
         multiplier @scale
         height 100
