@@ -219,52 +219,10 @@
       [:h2.sub-heading (str title " (" num-tasks ")")]
       (table state (:states @app-state) task-attrs)]]))
 
-(defn stringify
-  [x]
-  (.stringify js/JSON (clj->js x) nil 2))
-
-(defn data-attrs
-  []
-  (let [data (str "text/json;charset=utf-8," (stringify @chart-data))]
-    {:href (str "data:" data) :download "rate-vs-cells.json"}))
-
 (defn running-stats
   []
   (let [{:keys [rate cell-quantity]} @app-state]
     [:span (str rate " completed/s - " cell-quantity " cells")]))
-
-(defn chart
-  []
-  (let [pairs (partition 2 1
-                         (-> @chart-data
-                             (charts/convert-all-ms-to-s :time)
-                             (charts/fill-gaps :time (/ (current-time) 1000))))
-        interval-x 5
-        multiplier @scale
-        height 100
-        colors {:rate "#000" :cell-quantity "#f00"}]
-    [:div.section-ctr
-     [:div {:style {:overflow "scroll"}}
-      [:svg {:style {:background "#ccc" :width "10000px" :height (str height "px")}}
-       (map-indexed (fn [idx [from to]]
-                      (let [x1 (* idx interval-x)
-                            x2 (+ interval-x (* idx interval-x))
-                            rate-y1 (- height (* multiplier (:rate from)))
-                            rate-y2 (- height (* multiplier (:rate to)))
-                            cells-y1 (- height (* multiplier (:cell-quantity from)))
-                            cells-y2 (- height (* multiplier (:cell-quantity to)))]
-                        [:g {:key (str "lines" idx)}
-                         [:line {:x1 x1 :y1 rate-y1
-                                 :x2 x2 :y2 rate-y2
-                                 :style {:stroke (colors :rate)}}]
-                         [:line {:x1 x1 :y1 cells-y1
-                                 :x2 x2 :y2 cells-y2
-                                 :style {:stroke (colors :cell-quantity)}}]]))
-                    pairs)]]
-     [:p.inl
-      [:a (data-attrs) "Download JSON"]]
-     [:p.inl {:style {:color (colors :cell-quantity)}} "Cells"]
-     [:p.inl {:style {:color (colors :rate)}} "Rate"]]))
 
 (defn page
   []
@@ -274,7 +232,7 @@
     [running-stats]
     ")"]
    [:div.fw-section
-    [chart]
+    [charts/draw @chart-data (current-time) @scale]
     [:div.section-ctr
      [:h2.sub-heading "Controls"]
      (input new-task :domain "Domain")
