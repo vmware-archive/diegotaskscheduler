@@ -210,14 +210,19 @@
         (for [k (keys fields)]
           (table-division keyfn k t))])]]])
 
-(defn section
-  [state title task-attrs]
+(defn section-container
+  [state title content]
   (let [num-tasks (count (state (:states @app-state)))]
     [:div
      {:class (str "section " (name state) " numtasks" num-tasks)}
      [:div.section-ctr
       [:h2.sub-heading (str title " (" num-tasks ")")]
-      (table state (:states @app-state) task-attrs)]]))
+      content]]))
+
+(defn section
+  [state title task-attrs]
+  [section-container 
+   state title (table state (:states @app-state) task-attrs)])
 
 (defn running-stats
   []
