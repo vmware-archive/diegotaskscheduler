@@ -1,10 +1,10 @@
 (ns diegoscheduler.tasks)
 
-(defn same-guid-as
+(defn- same-guid-as
   [m]
   #(= (:task_guid m) (:task_guid %)))
 
-(defn remove-old-state
+(defn- remove-old-state
   [m task]
   (reduce (fn [acc [state tasks]]
             (merge acc
@@ -12,7 +12,7 @@
           {}
           m))
 
-(defn do-not-run
+(defn- do-not-run
   [m task]
   (update-in m [:do-not-run] conj (:task_guid task)))
 

@@ -5,7 +5,8 @@
    [clojure.string :refer [join split]]
    [taoensso.sente :as sente :refer [cb-success?]]
    [diegoscheduler.charts :as charts]
-   [diegoscheduler.tasks :as tasks])
+   [diegoscheduler.tasks :as tasks]
+   [diegoscheduler.sente-interop :refer [events]])
   (:require-macros [cljs.core.async.macros :refer [alt! go go-loop]]))
 
 (enable-console-print!)
@@ -53,16 +54,6 @@
   (if websocket?
     js/window.wsUrl
     (str "//" host (or path pathname))))
-
-(def extract-data
-  (map (fn [{[_ [_ data]] :event}] data)))
-
-(def events
-  "Map of type keywords to channels that automatically extract the
-  data portion of a sente event"
-  (into {}
-        (map (fn [type] {type (chan 1 extract-data)}))
-        [:queued :running :successful :failed :rate :cell-quantity]))
 
 (defn task-topic
   [{[_ [_ data]] :event}]
