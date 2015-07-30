@@ -18,11 +18,9 @@
                 (:states after-move))))))
     (testing "removes old state"
       (is (empty?
-           (get-in
-            (tasks/move-task app-state new-task-state)
-            [:states :running]))))
+           (-> (tasks/move-task app-state new-task-state)
+               (get-in [:states :running])))))
     (testing "adds new state"
       (is (= [new-task-state]
-             (get-in
-              (tasks/move-task app-state new-task-state)
-              [:states :successful]))))))
+             (-> (tasks/move-task app-state new-task-state)
+                 (get-in [:states :successful])))))))
