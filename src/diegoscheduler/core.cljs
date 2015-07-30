@@ -4,7 +4,8 @@
    [cljs.core.async :as a :refer [<! >! chan close! pub put! sub]]
    [clojure.string :refer [join split]]
    [taoensso.sente :as sente :refer [cb-success?]]
-   [diegoscheduler.charts :as charts])
+   [diegoscheduler.charts :as charts]
+   [diegoscheduler.tasks :as tasks])
   (:require-macros [cljs.core.async.macros :refer [alt! go go-loop]]))
 
 (enable-console-print!)
@@ -47,48 +48,6 @@
                       (merge (rate-vs-cell new-state)
                              {:time (current-time)})))))
 
-(defn same-guid-as
-  [m]
-  #(= (:task_guid m) (:task_guid %)))
-
-(defn remove-old-state
-  [m task]
-  (reduce (fn [acc [state tasks]]
-            (merge acc
-                   {state (vec (remove (same-guid-as task) tasks))}))
-          {} m))
-
-(defn state-of
-  [task]
-  (if (:failed task)
-    :failed
-    (case (:state task)
-      "COMPLETED" :successful
-      "RUNNING" :running
-      "PENDING" :pending
-      "QUEUED" :queued)))
-
-(defn add-new-state
-  [m task]
-  (update-in m [(state-of task)] conj task))
-
-(defn do-not-run
-  [m task]
-  (update-in m [:do-not-run] conj (:task_guid task)))
-
-(defn move-task
-  [m task]
-  (-> m
-      (do-not-run task)
-      (update-in [:states] remove-old-state task)
-      (update-in [:states] add-new-state task)))
-
-(defn now-running
-  [m task]
-  (if (some #{(:task_guid task)} (:do-not-run m))
-    m
-    (move-task m task)))
-
 (defn chsk-url-fn
   [path {:as window-location :keys [host pathname]} websocket?]
   (if websocket?
@@ -107,7 +66,7 @@
 
 (defn task-topic
   [{[_ [_ data]] :event}]
-  (state-of data))
+  (tasks/state-of data))
 
 (defn app-topic
   [{[_ [event-type _]] :event :as e}]
@@ -140,19 +99,19 @@
             (:queued events)        ([task _]
                                      (println "Queued:" (:task_guid task))
                                      (swap! app-state
-                                            update-in [:states] add-new-state task)
+                                            update-in [:states] tasks/add-new-state task)
                                      (recur))
             (:running events)       ([task _]
                                      (println "Running:" (:task_guid task))
-                                     (swap! app-state now-running task)
+                                     (swap! app-state tasks/now-running task)
                                      (recur))
             (:successful events)    ([task _]
                                      (println "Successful:" (:task_guid task))
-                                     (swap! app-state move-task task)
+                                     (swap! app-state tasks/move-task task)
                                      (recur))
             (:failed events)        ([task _]
                                      (println "Failed:" (:task_guid task))
-                                     (swap! app-state move-task task)
+                                     (swap! app-state tasks/move-task task)
                                      (recur))
             (:rate events)          ([rate _]
                                      (swap! app-state assoc :rate rate)
