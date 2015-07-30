@@ -6,7 +6,7 @@
    [taoensso.sente :as sente :refer [cb-success?]]
    [diegoscheduler.charts :as charts]
    [diegoscheduler.tasks :as tasks]
-   [diegoscheduler.sente-interop :refer [events]])
+   [diegoscheduler.sente-interop :refer [events topic]])
   (:require-macros [cljs.core.async.macros :refer [alt! go go-loop]]))
 
 (enable-console-print!)
@@ -55,24 +55,6 @@
     js/window.wsUrl
     (str "//" host (or path pathname))))
 
-(defn task-topic
-  [{[_ [_ data]] :event}]
-  (tasks/state-of data))
-
-(defn app-topic
-  [{[_ [event-type _]] :event :as e}]
-  (case event-type
-    :diegotaskscheduler/rate :rate
-    :diegotaskscheduler/cell-quantity :cell-quantity
-    (task-topic e)))
-
-(defn topic
-  "Return topic keyword for a given sente event"
-  [{[id _] :event :as e}]
-  (if (= :chsk/recv id)
-    (app-topic e)
-    :connection))
-
 (let [{:keys [chsk ch-recv send-fn state]}
       (sente/make-channel-socket! "/ws" {:type :auto
                                          :chsk-url-fn chsk-url-fn})
@@ -90,7 +72,8 @@
             (:queued events)        ([task _]
                                      (println "Queued:" (:task_guid task))
                                      (swap! app-state
-                                            update-in [:states] tasks/add-new-state task)
+                                            update-in [:states]
+                                            tasks/add-new-state task)
                                      (recur))
             (:running events)       ([task _]
                                      (println "Running:" (:task_guid task))
