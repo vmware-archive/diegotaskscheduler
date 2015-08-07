@@ -21,10 +21,11 @@
   {:domain domain
    :task_guid guid
    :log_guid log_guid
-   :stack "lucid64"
    :privileged true
+   :stack "lucid64"
    :rootfs rootfs
-   :action {:run {:path path
+   :action {:run {:user "root"
+                  :path path
                   :args (s/split args #" ")}}
    :env (format-env env)
    :dir dir

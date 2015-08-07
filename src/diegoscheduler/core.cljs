@@ -17,7 +17,7 @@
          :docker-image "docker:///cdavisafc/sleepd5"
          :path "ruby"
          :dir "/app"
-         :args "app.rb 1"
+         :args "/app/app.rb 1"
          :result-file ""
          :env ""
          :quantity 1}))
