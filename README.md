@@ -42,7 +42,7 @@ Now run the following to start the server:
 ```sh
 PORT=8080 \
 API_URL=http://192.168.11.11:8888/v1 \
-WS_URL=ws://localhost:8080/ws \
+WS_URL=wss://localhost:8080/ws \
 java -jar target/diegoscheduler-0.2.1-SNAPSHOT-standalone.jar
 ```
 
@@ -54,8 +54,8 @@ A manifest.yml is prepared for you in the repo. You just need to build the JAR a
 
 ```sh
 cf push -n mysubdomain
-cf set-env taskscheduler API_URL=http://user:pass@receptor.123.123.123.123.xip.io/v1
-cf set-env taskscheduler WS_URL=wss://mysubdomain.cfapps.io:4443/ws
+cf set-env taskscheduler API_URL http://user:pass@receptor.123.123.123.123.xip.io/v1
+cf set-env taskscheduler WS_URL wss://mysubdomain.cfapps.io:4443/ws
 cf restage taskscheduler
 ```
 
