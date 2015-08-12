@@ -8,8 +8,7 @@
 (defn index [{ws-url :ws-url}]
   (html5
    [:head
-    (styles "https://cdnjs.cloudflare.com/ajax/libs/meyer-reset/2.0/reset.css"
-            "css/style.css")]
+    (styles "css/reset.css" "css/style.css")]
    [:body
     [:div#app
      [:h2 "Loading..."]]
