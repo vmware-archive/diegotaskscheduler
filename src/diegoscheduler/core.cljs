@@ -1,7 +1,7 @@
 (ns diegoscheduler.core
   (:require
    [reagent.core :as reagent :refer [atom]]
-   [cljs.core.async :as a :refer [<! >! chan close! pub put! sub]]
+   [cljs.core.async :as a :refer [<! >! chan close! pub put! sub timeout]]
    [clojure.string :refer [join split]]
    [taoensso.sente :as sente :refer [cb-success?]]
    [diegoscheduler.charts :as charts]
@@ -31,7 +31,8 @@
                           :do-not-run #{}}))
 
 (defonce chart-data (atom []))
-(defonce scale (atom 5))
+(defonce y-scale (atom 5))
+(defonce x-scale (atom 5))
 
 (defn rate-vs-cell
   [m]
@@ -45,9 +46,21 @@
            :chart-data
            (fn [key a old-state new-state]
              (when (not= (rate-vs-cell old-state) (rate-vs-cell new-state))
-               (swap! chart-data conj
-                      (merge (rate-vs-cell new-state)
-                             {:time (current-time)})))))
+               (let [time            (current-time)
+                     new-chart-data  (swap! chart-data conj
+                                            (merge (rate-vs-cell new-state)
+                                                   {:time time}))
+                     chart-width     (charts/width (charts/pairs new-chart-data (current-time))
+                                                   @x-scale)
+                     container-el    (.getElementById js/document "chart")
+                     container-width (.-offsetWidth container-el)
+                     scroll-pos      (charts/scroll-position chart-width container-width)]
+                 (println "Chart width: " chart-width)
+                 (println "Container width: " container-width)
+                 (println "Scroll position: " scroll-pos)
+                 (go
+                   (<! (timeout 500))
+                   (set! (.-scrollLeft container-el) scroll-pos))))))
 
 (defn chsk-url-fn
   [path {:as window-location :keys [host pathname]} websocket?]
@@ -70,21 +83,17 @@
         (go-loop []
           (alt!
             (:queued events)        ([task _]
-                                     (println "Queued:" (:task_guid task))
                                      (swap! app-state
                                             update-in [:states]
                                             tasks/add-new-state task)
                                      (recur))
             (:running events)       ([task _]
-                                     (println "Running:" (:task_guid task))
                                      (swap! app-state tasks/now-running task)
                                      (recur))
             (:successful events)    ([task _]
-                                     (println "Successful:" (:task_guid task))
                                      (swap! app-state tasks/move-task task)
                                      (recur))
             (:failed events)        ([task _]
-                                     (println "Failed:" (:task_guid task))
                                      (swap! app-state tasks/move-task task)
                                      (recur))
             (:rate events)          ([rate _]
@@ -181,7 +190,7 @@
    [:div.fw-section
     (let [colors {:rate "#000" :cell-quantity "#f00"}]
       [:div.section-ctr
-       [charts/draw (charts/pairs @chart-data (current-time)) 5 @scale colors]
+       [charts/draw (charts/pairs @chart-data (current-time)) @x-scale @y-scale colors]
        [:p.inl
         [:a (data-attrs (stringify @chart-data) "rate-vs-cells.json") "Download JSON"]]
        [:p.inl {:style {:color (colors :cell-quantity)}} "Cells"]

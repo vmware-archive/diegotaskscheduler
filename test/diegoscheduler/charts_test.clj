@@ -24,3 +24,11 @@
                               {:time 12 :rate 20 :cell-quantity 3}
                               {:time 14 :rate 5  :cell-quantity 4}]
                              :time 16)))))
+
+(deftest scroll-position
+  (testing "in 1st screen, no scroll"
+    (is (= 0 (charts/scroll-position 10 1000))))
+  (testing "in 2nd screen, container width"
+    (is (= 1000 (charts/scroll-position 1010 1000))))
+  (testing "in 3rd screen, container width * 2"
+    (is (= 2000 (charts/scroll-position 2001 1000)))))

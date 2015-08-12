@@ -28,6 +28,10 @@
   [pairs x-interval]
   (* x-interval (count pairs)))
 
+(defn scroll-position
+  [chart-width container-width]
+  chart-width)
+
 (defn draw
   [pairs x-interval y-scale colors]
   (let [height 100]
