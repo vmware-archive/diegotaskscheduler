@@ -27,22 +27,26 @@
   [x]
   #?(:cljs (.stringify js/JSON (clj->js x) nil 2)))
 
+(defn width
+  [data interval-x]
+  (let [times (map :time (convert-all-ms-to-s data :time))]
+    (* interval-x (- (last times) (first times)))))
+
 (defn draw
-  [data time-now y-scale]
-  (let [pairs (partition 2 1
-                         (-> data
-                             (convert-all-ms-to-s :time)
-                             (fill-gaps :time (/ time-now 1000))))
-        interval-x 5
+  [data time-now interval-x y-scale]
+  (let [pairs      (partition 2 1
+                              (-> data
+                                  (convert-all-ms-to-s :time)
+                                  (fill-gaps :time (/ time-now 1000))))
         multiplier y-scale
-        height 100
-        colors {:rate "#000" :cell-quantity "#f00"}]
+        height     100
+        colors     {:rate "#000" :cell-quantity "#f00"}]
     [:div.section-ctr
-     [:div {:style {:overflow "scroll"}}
+     [:div#chart {:style {:overflow "scroll"}}
       [:svg {:style {:background "#ccc" :width "10000px" :height (str height "px")}}
        (map-indexed (fn [idx [from to]]
                       (let [x1 (* idx interval-x)
-                            x2 (+ interval-x (* idx interval-x))
+                            x2 (+ interval-x x1)
                             rate-y1 (- height (* multiplier (:rate from)))
                             rate-y2 (- height (* multiplier (:rate to)))
                             cells-y1 (- height (* multiplier (:cell-quantity from)))

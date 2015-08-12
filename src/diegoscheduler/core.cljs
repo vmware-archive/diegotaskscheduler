@@ -170,7 +170,7 @@
     [running-stats]
     ")"]
    [:div.fw-section
-    [charts/draw @chart-data (current-time) @scale]
+    [charts/draw @chart-data (current-time) 5 @scale]
     [:div.section-ctr
      [:h2.sub-heading "Controls"]
      (input new-task :domain "Domain")
