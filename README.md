@@ -45,7 +45,7 @@ Now run the following to start the server:
 PORT=8080 \
 API_URL=http://192.168.11.11:8888/v1 \
 WS_URL=wss://localhost:8080/ws \
-java -jar target/diegoscheduler-0.2.1-SNAPSHOT-standalone.jar
+java -jar target/diegoscheduler-0.3.0-SNAPSHOT-standalone.jar
 ```
 
 Open a browser at [http://localhost:8080/](http://localhost:8080/). You should see a rudimentary interface for creating a Task. The defaults will result in a "Successful" docker image being downloaded and run. The default task is just a sleep.

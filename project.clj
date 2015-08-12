@@ -1,4 +1,4 @@
-(defproject diegoscheduler "0.2.1-SNAPSHOT"
+(defproject diegoscheduler "0.3.0-SNAPSHOT"
   :description "Experimental task scheduler for Diego"
   :url "https://github.com/pivotal-cf-experimental/diegotaskscheduler"
   :license {:name "Eclipse Public License"
