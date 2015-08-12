@@ -23,6 +23,7 @@
          :quantity 1}))
 
 (defonce app-state (atom {:rate 0
+                          :auto-scroll true
                           :cell-quantity 0
                           :states {:queued []
                                    :running []
@@ -63,7 +64,8 @@
                      container-el    (chart-container)
                      container-width (el-width container-el)
                      scroll-pos      (charts/scroll-position chart-width container-width)]
-                 (set! (.-scrollLeft container-el) scroll-pos)))))
+                 (when (:auto-scroll new-state)
+                   (set! (.-scrollLeft container-el) scroll-pos))))))
 
 (defn chsk-url-fn
   [path {:as window-location :keys [host pathname]} websocket?]
@@ -115,6 +117,10 @@
   [a attr]
   (fn [e]
     (swap! a #(assoc % attr (-> e .-target .-value)))))
+
+(defn toggle
+  [a k]
+  (swap! a update-in [k] not))
 
 (defn input
   [a key label]
@@ -206,7 +212,12 @@
        [:p.inl
         [:a (data-attrs (stringify @chart-data) "rate-vs-cells.json") "Download JSON"]]
        [:p.inl {:style {:color (colors :cell-quantity)}} "Cells"]
-       [:p.inl {:style {:color (colors :rate)}} "Rate"]])
+       [:p.inl {:style {:color (colors :rate)}} "Rate"]
+       [:p.inl
+        [:input#autoscroll {:type "checkbox"
+                            :checked (:auto-scroll @app-state)
+                            :on-change #(toggle app-state :auto-scroll)}]
+        [:label {:for "autoscroll"} "Auto-scroll"]]])
     [:div.section-ctr
      [:h2.sub-heading "Controls"]
      (input new-task :domain "Domain")
