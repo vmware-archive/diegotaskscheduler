@@ -30,14 +30,14 @@
 
 (defn scroll-position
   [chart-width container-width]
-  chart-width)
+  (* container-width (quot chart-width container-width)))
 
 (defn draw
-  [pairs x-interval y-scale colors]
+  [pairs x-interval y-scale chart-width colors]
   (let [height 100]
     [:div#chart {:style {:overflow "scroll"}}
      [:svg {:style {:background "#ccc"
-                    :width (str (width pairs x-interval) "px")
+                    :width (str chart-width "px")
                     :height (str height "px")}}
       (map-indexed (fn [idx [from to]]
                      (let [x1 (* idx x-interval)

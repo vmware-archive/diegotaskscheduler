@@ -42,6 +42,14 @@
   []
   (-> (js/Date.) .getTime))
 
+(defn chart-container
+  []
+  (.getElementById js/document "chart"))
+
+(defn el-width
+  [el]
+  (if el (.-offsetWidth el) 0))
+
 (add-watch app-state
            :chart-data
            (fn [key a old-state new-state]
@@ -52,15 +60,10 @@
                                                    {:time time}))
                      chart-width     (charts/width (charts/pairs new-chart-data (current-time))
                                                    @x-scale)
-                     container-el    (.getElementById js/document "chart")
-                     container-width (.-offsetWidth container-el)
+                     container-el    (chart-container)
+                     container-width (el-width container-el)
                      scroll-pos      (charts/scroll-position chart-width container-width)]
-                 (println "Chart width: " chart-width)
-                 (println "Container width: " container-width)
-                 (println "Scroll position: " scroll-pos)
-                 (go
-                   (<! (timeout 500))
-                   (set! (.-scrollLeft container-el) scroll-pos))))))
+                 (set! (.-scrollLeft container-el) scroll-pos)))))
 
 (defn chsk-url-fn
   [path {:as window-location :keys [host pathname]} websocket?]
@@ -188,9 +191,18 @@
     [running-stats]
     ")"]
    [:div.fw-section
-    (let [colors {:rate "#000" :cell-quantity "#f00"}]
+    (let [colors               {:rate "#000" :cell-quantity "#f00"}
+          pairs                (charts/pairs @chart-data (current-time))
+          chart-logical-width  (charts/width pairs @x-scale)
+          container-width      (el-width (chart-container))
+          chart-draw-width     (+ (charts/scroll-position chart-logical-width container-width)
+                                  container-width)]
       [:div.section-ctr
-       [charts/draw (charts/pairs @chart-data (current-time)) @x-scale @y-scale colors]
+       [charts/draw
+        (charts/pairs @chart-data (current-time))
+        @x-scale @y-scale
+        chart-draw-width
+        colors]
        [:p.inl
         [:a (data-attrs (stringify @chart-data) "rate-vs-cells.json") "Download JSON"]]
        [:p.inl {:style {:color (colors :cell-quantity)}} "Cells"]
