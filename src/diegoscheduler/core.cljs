@@ -62,10 +62,10 @@
                      chart-width     (charts/width (charts/pairs new-chart-data (current-time))
                                                    @x-scale)
                      container-el    (chart-container)
-                     container-width (el-width container-el)
-                     scroll-pos      (charts/scroll-position chart-width container-width)]
+                     container-width (el-width container-el)]
                  (when (:auto-scroll new-state)
-                   (set! (.-scrollLeft container-el) scroll-pos))))))
+                   (set! (.-scrollLeft container-el)
+                         (charts/scroll-position chart-width container-width)))))))
 
 (defn chsk-url-fn
   [path {:as window-location :keys [host pathname]} websocket?]
