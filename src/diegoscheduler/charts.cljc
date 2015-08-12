@@ -23,43 +23,35 @@
   {:href (str "data:text/json;charset=utf-8," s)
    :download "rate-vs-cells.json"})
 
-(defn stringify
-  [x]
-  #?(:cljs (.stringify js/JSON (clj->js x) nil 2)))
+(defn pairs
+  [data time-now]
+  (partition 2 1 (-> data
+                     (convert-all-ms-to-s :time)
+                     (fill-gaps :time (/ time-now 1000)))))
 
 (defn width
-  [data interval-x]
-  (let [times (map :time (convert-all-ms-to-s data :time))]
-    (* interval-x (- (last times) (first times)))))
+  [pairs x-interval]
+  (* x-interval (count pairs)))
 
 (defn draw
-  [data time-now interval-x y-scale]
-  (let [pairs      (partition 2 1
-                              (-> data
-                                  (convert-all-ms-to-s :time)
-                                  (fill-gaps :time (/ time-now 1000))))
-        multiplier y-scale
-        height     100
-        colors     {:rate "#000" :cell-quantity "#f00"}]
-    [:div.section-ctr
-     [:div#chart {:style {:overflow "scroll"}}
-      [:svg {:style {:background "#ccc" :width "10000px" :height (str height "px")}}
-       (map-indexed (fn [idx [from to]]
-                      (let [x1 (* idx interval-x)
-                            x2 (+ interval-x x1)
-                            rate-y1 (- height (* multiplier (:rate from)))
-                            rate-y2 (- height (* multiplier (:rate to)))
-                            cells-y1 (- height (* multiplier (:cell-quantity from)))
-                            cells-y2 (- height (* multiplier (:cell-quantity to)))]
-                        [:g {:key (str "lines" idx)}
-                         [:line {:x1 x1 :y1 rate-y1
-                                 :x2 x2 :y2 rate-y2
-                                 :style {:stroke (colors :rate)}}]
-                         [:line {:x1 x1 :y1 cells-y1
-                                 :x2 x2 :y2 cells-y2
-                                 :style {:stroke (colors :cell-quantity)}}]]))
-                    pairs)]]
-     [:p.inl
-      [:a (data-attrs (stringify data)) "Download JSON"]]
-     [:p.inl {:style {:color (colors :cell-quantity)}} "Cells"]
-     [:p.inl {:style {:color (colors :rate)}} "Rate"]]))
+  [pairs x-interval y-scale colors]
+  (let [height 100]
+    [:div#chart {:style {:overflow "scroll"}}
+     [:svg {:style {:background "#ccc"
+                    :width (str (width pairs x-interval) "px")
+                    :height (str height "px")}}
+      (map-indexed (fn [idx [from to]]
+                     (let [x1 (* idx x-interval)
+                           x2 (+ x-interval x1)
+                           rate-y1 (- height (* y-scale (:rate from)))
+                           rate-y2 (- height (* y-scale (:rate to)))
+                           cells-y1 (- height (* y-scale (:cell-quantity from)))
+                           cells-y2 (- height (* y-scale (:cell-quantity to)))]
+                       [:g {:key (str "lines" idx)}
+                        [:line {:x1 x1 :y1 rate-y1
+                                :x2 x2 :y2 rate-y2
+                                :style {:stroke (colors :rate)}}]
+                        [:line {:x1 x1 :y1 cells-y1
+                                :x2 x2 :y2 cells-y2
+                                :style {:stroke (colors :cell-quantity)}}]]))
+                   pairs)]]))

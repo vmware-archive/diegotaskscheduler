@@ -24,7 +24,3 @@
                               {:time 12 :rate 20 :cell-quantity 3}
                               {:time 14 :rate 5  :cell-quantity 4}]
                              :time 16)))))
-
-(deftest width
-  (testing "it returns the width of the chart, based on the time data and x interval"
-    (is (= 2500 (charts/width [{:time 10000} {:time 510000}] 5)))))

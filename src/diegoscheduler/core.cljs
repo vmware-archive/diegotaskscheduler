@@ -162,6 +162,10 @@
   (let [{:keys [rate cell-quantity]} @app-state]
     [:span (str rate " completed/s - " cell-quantity " cells")]))
 
+(defn stringify
+  [x]
+  (.stringify js/JSON (clj->js x) nil 2))
+
 (defn page
   []
   [:div.container
@@ -170,7 +174,13 @@
     [running-stats]
     ")"]
    [:div.fw-section
-    [charts/draw @chart-data (current-time) 5 @scale]
+    (let [colors {:rate "#000" :cell-quantity "#f00"}]
+      [:div.section-ctr
+       [charts/draw (charts/pairs @chart-data (current-time)) 5 @scale colors]
+       [:p.inl
+        [:a (charts/data-attrs (stringify @chart-data)) "Download JSON"]]
+       [:p.inl {:style {:color (colors :cell-quantity)}} "Cells"]
+       [:p.inl {:style {:color (colors :rate)}} "Rate"]])
     [:div.section-ctr
      [:h2.sub-heading "Controls"]
      (input new-task :domain "Domain")
