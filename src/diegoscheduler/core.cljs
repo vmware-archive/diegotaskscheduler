@@ -166,6 +166,11 @@
   [x]
   (.stringify js/JSON (clj->js x) nil 2))
 
+(defn data-attrs
+  [s filename]
+  {:href (str "data:text/json;charset=utf-8," s)
+   :download filename})
+
 (defn page
   []
   [:div.container
@@ -178,7 +183,7 @@
       [:div.section-ctr
        [charts/draw (charts/pairs @chart-data (current-time)) 5 @scale colors]
        [:p.inl
-        [:a (charts/data-attrs (stringify @chart-data)) "Download JSON"]]
+        [:a (data-attrs (stringify @chart-data) "rate-vs-cells.json") "Download JSON"]]
        [:p.inl {:style {:color (colors :cell-quantity)}} "Cells"]
        [:p.inl {:style {:color (colors :rate)}} "Rate"]])
     [:div.section-ctr

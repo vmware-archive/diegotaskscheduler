@@ -18,11 +18,6 @@
           []
           (partition 2 1 (conj coll {k (inc final-k)}))))
 
-(defn data-attrs
-  [s]
-  {:href (str "data:text/json;charset=utf-8," s)
-   :download "rate-vs-cells.json"})
-
 (defn pairs
   [data time-now]
   (partition 2 1 (-> data
