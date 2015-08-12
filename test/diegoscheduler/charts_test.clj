@@ -9,7 +9,7 @@
                                       {:baz "qux" :time 20000}]
                                      :time))))
 
-(deftest data-manipulation
+(deftest fill-gaps
   (testing "chart data gets spread into a time series"
     (is (= [{:time 10 :rate 0  :cell-quantity 1}
             {:time 11 :rate 0  :cell-quantity 2}
