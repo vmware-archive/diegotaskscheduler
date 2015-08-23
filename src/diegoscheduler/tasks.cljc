@@ -22,9 +22,10 @@
     :failed
     (case (:state task)
       "COMPLETED" :successful
-      "RUNNING" :running
-      "PENDING" :pending
-      "QUEUED" :queued)))
+      "RUNNING"   :running
+      "RESOLVING" :running
+      "PENDING"   :pending
+      "QUEUED"    :queued)))
 
 (defn add-new-state
   [m task]
