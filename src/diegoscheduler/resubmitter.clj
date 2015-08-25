@@ -31,7 +31,7 @@
                 (fn [e] (log/error "Problem:" e)))
       (go-loop []
         (when-let [new-task (<! from-user)]
-          (swap! user-submitted-tasks assoc (:task_guid new-task) new-task)
+          (log/info "Resubmission db size:" (count (swap! user-submitted-tasks assoc (:task_guid new-task) new-task)))
           (recur)))
       component))
   (stop [component]
