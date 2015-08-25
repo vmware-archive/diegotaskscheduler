@@ -1,22 +1,21 @@
 (ns diegoscheduler.cell-poller
   (:require [com.stuartsierra.component :as component]
-            [diegoscheduler.diego :as d]
             [clojure.core.async :refer [put! >! chan alt! go-loop]]))
 
 (defrecord CellPoller
-    [cells-from-diego schedule
-     getfn
-     api-url
-     stopper]
+    [cells-from-diego schedule getfn api-url stopper]
   component/Lifecycle
   (start [component]
-    (let [stopper (chan)]
+    (let [stopper (chan)
+          all-cells (chan)]
       (go-loop []
         (alt!
           (schedule) ([_ _]
-                      (let [cells (d/remote-resources "cells" component)]
-                        (>! cells-from-diego (count cells))
-                        (recur)))
+                      (getfn (str api-url "/cells") all-cells)
+                      (recur))
+          all-cells  ([cells _]
+                      (put! cells-from-diego (count cells))
+                      (recur))
           stopper :stopped))
 
       (assoc component :stopper stopper)))

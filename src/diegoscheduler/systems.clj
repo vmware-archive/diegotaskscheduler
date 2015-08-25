@@ -6,6 +6,7 @@
             [diegoscheduler.http :as http]
             [diegoscheduler.cell-poller :refer [new-cell-poller]]
             [diegoscheduler.rate-emitter :refer [new-rate-emitter]]
+            [diegoscheduler.resolver :refer [new-resolver]]
             [diegoscheduler.resubmitter :refer [new-resubmitter]]
             [diegoscheduler.task-poller :refer [new-task-poller]]
             [diegoscheduler.task-submitter :refer [new-task-submitter]]
@@ -44,41 +45,43 @@
 (defn main-system
   [port-str api-url ws-url]
   (let [port (Integer. port-str)
-        new-tasks-input (chan)
-        new-tasks-mult (mult new-tasks-input)
+        new-tasks-input                         (chan)
+        new-tasks-mult                          (mult new-tasks-input)
 
-        tasks-ready-for-resubmission (chan)
-        tasks-ready-for-resubmission-mult (mult tasks-ready-for-resubmission)
-        resubmit-as-new-tasks (chan)
-        tasks-enqueued (chan 1 (comp set-as-queued
-                                     (tag-all :diegotaskscheduler/task)))
+        tasks-ready-for-resubmission            (chan)
+        tasks-ready-for-resubmission-mult       (mult tasks-ready-for-resubmission)
+        resubmit-as-new-tasks                   (chan)
+        tasks-enqueued                          (chan 1 (comp set-as-queued
+                                                              (tag-all :diegotaskscheduler/task)))
 
-        user-submissions-for-diego (chan)
-        user-submissions-for-resubmitter (chan) ; resubmitter needs to look up original tasks
+        user-submissions-for-diego              (chan)
+        user-submissions-for-resubmitter        (chan) ; resubmitter needs to look up original tasks
 
-        cells-from-diego (chan 1 (tag-all :diegotaskscheduler/cell-quantity))
+        cells-from-diego                        (chan 1 (tag-all :diegotaskscheduler/cell-quantity))
 
-        tasks-from-diego-input (chan)
-        tasks-from-diego-mult (mult tasks-from-diego-input)
-        capacity-failures-from-diego (chan 1 (filter capacity-failure?))
+        tasks-from-diego-input                  (chan)
+        tasks-from-diego-mult                   (mult tasks-from-diego-input)
+        capacity-failures-from-diego            (chan 1 (filter capacity-failure?))
 
-        completed-tasks (chan 1 (filter completed?))
-        rate-of-completion (chan 1 (tag-all :diegotaskscheduler/rate))
+        completed-tasks-for-rate-emitter        (chan 1 (filter completed?))
+        completed-tasks-for-resolver            (chan 1 (filter completed?))
+        rate-of-completion                      (chan 1 (tag-all :diegotaskscheduler/rate))
 
-        tasks-for-ui (chan 1 (tag-all :diegotaskscheduler/task))
-        ui-updates (async/merge [tasks-for-ui
-                                 tasks-enqueued
-                                 rate-of-completion
-                                 cells-from-diego])
+        tasks-for-ui                            (chan 1 (tag-all :diegotaskscheduler/task))
+        ui-updates                              (async/merge [tasks-for-ui
+                                                              tasks-enqueued
+                                                              rate-of-completion
+                                                              cells-from-diego])
 
-        poll-schedule (fn [] (timeout update-interval))
-        rate-schedule (fn [] (timeout rate-denominator))]
+        poll-schedule                           (fn [] (timeout update-interval))
+        rate-schedule                           (fn [] (timeout rate-denominator))]
 
     (tap new-tasks-mult user-submissions-for-diego)
     (tap new-tasks-mult user-submissions-for-resubmitter)
 
     (tap tasks-from-diego-mult capacity-failures-from-diego)
-    (tap tasks-from-diego-mult completed-tasks)
+    (tap tasks-from-diego-mult completed-tasks-for-rate-emitter)
+    (tap tasks-from-diego-mult completed-tasks-for-resolver)
     (tap tasks-from-diego-mult tasks-for-ui)
 
     (tap tasks-ready-for-resubmission-mult tasks-enqueued)
@@ -95,12 +98,15 @@
                                          api-url)
      :task-poller    (new-task-poller    tasks-from-diego-input
                                          poll-schedule
-                                         http/GET http/DELETE
+                                         http/GET
+                                         api-url)
+     :resolver       (new-resolver       completed-tasks-for-resolver
+                                         http/DELETE
                                          api-url)
      :resubmitter    (new-resubmitter    capacity-failures-from-diego
                                          tasks-ready-for-resubmission
                                          user-submissions-for-resubmitter)
-     :rate-emitter   (new-rate-emitter   completed-tasks
+     :rate-emitter   (new-rate-emitter   completed-tasks-for-rate-emitter
                                          rate-of-completion
                                          rate-schedule
                                          rate-window)

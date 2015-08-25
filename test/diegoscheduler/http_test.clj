@@ -1,6 +1,7 @@
 (ns diegoscheduler.http-test
   (:require [diegoscheduler.http :refer :all]
             [clojure.test :refer :all]
+            [clojure.core.async :refer [chan <!! go alt! timeout]]
             [clj-http.client :as http]))
 
 (deftest POSTing
@@ -17,13 +18,14 @@
 
 (deftest GETing
   (testing "Success"
-    (is (= "http://eu.httpbin.org/get"
-           (let [[_ result] (GET "http://eu.httpbin.org/get")]
-             (result :url)))))
-  (testing "Unknown Host"
-    (is (= ["Unknown Host" nil] (GET "http://made.up.place.hopefully.will.never.exist/"))))
-  (testing "Connection Refused"
-    (is (= ["Connection Refused", nil] (GET "http://127.0.0.1:9999")))))
+    (let [resources (chan)
+          timeout-ch (timeout 1000)]
+      (GET "http://eu.httpbin.org/get" resources)
+      (go
+        (is (= "Basic Og=="
+               (:Authorization (alt!
+                                 resources  ([resource _] (:headers resource))
+                                 timeout-ch "Timed out when waiting for result"))))))))
 
 (deftest DELETEing
   (testing "Success"

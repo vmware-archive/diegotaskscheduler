@@ -1,7 +1,7 @@
 (ns diegoscheduler.cell-poller-test
   (:require [diegoscheduler.cell-poller :refer [new-cell-poller]]
             [clojure.test :refer :all]
-            [clojure.core.async :refer [chan <!! >!!]]
+            [clojure.core.async :refer [chan <!! >!! onto-chan put!]]
             [com.stuartsierra.component :refer [start stop]]))
 
 (deftest cell-polling
@@ -10,14 +10,11 @@
           output (chan)
           cells (atom [{:cell_id "cell-0"}
                        {:cell_id "cell-1"}])
-          getfn (fn [uri] 
+          getfn (fn [uri cells-ch]
                   (if (= uri "http://my.api/cells")
-                    [nil @cells]
-                    [nil [{:bad :uri :buddy :boy}]]))
-          cell-poller (new-cell-poller output
-                                       (constantly fire-now)
-                                       getfn
-                                       "http://my.api")
+                    (put! cells-ch @cells)
+                    (put! cells-ch {:bad :uri :buddy :boy})))
+          cell-poller (new-cell-poller output (constantly fire-now) getfn "http://my.api")
           running-cell-poller (start cell-poller)]
       (>!! fire-now :please)
       (is (= 2 (<!! output)))

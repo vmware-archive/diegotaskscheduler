@@ -40,11 +40,3 @@
     (if error
       (log/error error)
       result)))
-
-(defn delete-completed
-  [{deletefn :deletefn api-url :api-url}
-   tasks]
-  (let [completed-tasks (filter #(= "COMPLETED" (:state %)) tasks)]
-    (doseq [t completed-tasks]
-      (deletefn (str api-url "/tasks/" (:task_guid t))))))
-
