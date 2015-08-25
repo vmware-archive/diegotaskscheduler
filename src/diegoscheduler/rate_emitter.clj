@@ -2,41 +2,36 @@
   (:require [com.stuartsierra.component :as component]
             [clojure.core.async :as async :refer [alt! chan go-loop put! >!]]))
 
+(defn rate
+  [n coll]
+  (let [total (->> coll reverse (take n) flatten set count)]
+    (/ total n)))
+
 (defn last-tick
   [coll]
   (dec (count coll)))
 
-(defn inc-completed
-  [coll]
-  (update-in coll [(last-tick coll)] inc))
-
-(defn add-tick
-  [coll]
-  (conj coll 0))
+(defn add-completed
+  [coll task]
+  (update-in coll [(last-tick coll)]
+             conj task))
 
 (defrecord RateEmitter
-    [completed-tasks rate schedule window
+    [completed-tasks rate-ch schedule window
      stopper]
   component/Lifecycle
   (start [component]
     (let [stopper (chan)
-          completions (atom [0])]
+          completions (atom [[]])]
       (go-loop []
         (alt!
           completed-tasks ([task _]
-                           (swap! completions inc-completed)
+                           (swap! completions add-completed task)
                            (recur))
           (schedule) ([_ _]
-                      (let [coll @completions
-                            completions-in-window (nthrest coll
-                                                           (- (count coll)
-                                                              window))]
-                        (>! rate
-                            (double
-                             (/ (apply + completions-in-window)
-                                window)))
-
-                        (swap! completions add-tick))
+                      (>! rate-ch
+                          (double (rate window @completions)))
+                      (swap! completions conj [])
                       (recur))
           stopper :stopped))
       (assoc component
@@ -47,6 +42,6 @@
 
 (defn new-rate-emitter [completed-tasks rate schedule window]
   (map->RateEmitter {:completed-tasks completed-tasks
-                     :rate rate
+                     :rate-ch rate
                      :schedule schedule
                      :window window}))
