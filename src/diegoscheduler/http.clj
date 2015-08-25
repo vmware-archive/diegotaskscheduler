@@ -30,20 +30,23 @@
                             :body)]
                 [nil result]))))
 
-(defn GET [url resources]
-  (httpkit/get url {:as :text
+(defn- req
+  [method url response]
+  (httpkit/request {:url url
+                    :method method
+                    :as :text
                     :basic-auth (basic-auth url)}
-               (fn [{body :body
-                     status :status}]
-                 (if (= 200 status)
-                   (put! resources (cheshire/parse-string body true))
-                   (log/error "GET"
-                              url
-                              "gave a"
-                              status)))))
+                   (fn [{body :body
+                         status :status}]
+                     (if (= 200 status)
+                       (put! response (cheshire/parse-string body true))
+                       (log/error method
+                                  url
+                                  "gave a"
+                                  status)))))
 
-(defn DELETE [url]
-  (wrap (fn []
-          (let [result ((client/delete url {:as :json})
-                        :body)]
-            [nil result]))))
+(defn GET [url response]
+  (req :get url response))
+
+(defn DELETE [url response]
+  (req :delete url response))

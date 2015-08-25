@@ -17,20 +17,23 @@
     (is (= ["400" nil] (POST "http://eu.httpbin.org/status/400" {:foo "bar"})))))
 
 (deftest GETing
-  (testing "Success"
-    (let [resources (chan)
+  (testing "Success puts the JSON parsed body on a channel"
+    (let [response (chan)
           timeout-ch (timeout 1000)]
-      (GET "http://eu.httpbin.org/get" resources)
+      (GET "http://eu.httpbin.org/get" response)
       (go
         (is (= "Basic Og=="
                (:Authorization (alt!
-                                 resources  ([resource _] (:headers resource))
+                                 response  ([res _] (:headers res))
                                  timeout-ch "Timed out when waiting for result"))))))))
 
 (deftest DELETEing
-  (testing "Success"
-    (is (= "http://eu.httpbin.org/delete"
-           (let [[_ result] (DELETE "http://eu.httpbin.org/delete")]
-             (result :url)))))
-  (testing "Not Found"
-    (is (= ["Not Found" nil] (DELETE "http://www.andrewbruce.net/a-non-existent-place")))))
+  (testing "Success puts the JSON parsed body on a channel"
+    (let [response (chan)
+          timeout-ch (timeout 1000)]
+      (DELETE "http://eu.httpbin.org/delete" response)
+      (go
+        (is (= "http://eu.httpbin.org/delete"
+               (alt!
+                 response ([res _] (:url res))
+                 timeout-ch "Timed out")))))))

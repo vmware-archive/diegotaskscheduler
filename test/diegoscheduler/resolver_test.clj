@@ -7,7 +7,9 @@
 (deftest resolver
   (testing "completed tasks get resolved"
     (let [deleted-uris (atom [])
-          deletefn (fn [uri] (swap! deleted-uris conj uri))
+          deletefn (fn [uri response]
+                     (swap! deleted-uris conj uri)
+                     (put! response {:foo "bar"}))
           tasks-to-resolve (chan)
           resolver (new-resolver tasks-to-resolve
                                  deletefn

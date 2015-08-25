@@ -1,6 +1,6 @@
 (ns diegoscheduler.resolver
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [go-loop pipeline close! <!]]))
+            [clojure.core.async :refer [go-loop chan <! alt!]]))
 
 (defrecord Resolver
     [tasks-to-resolve
@@ -8,10 +8,14 @@
      api-url]
   component/Lifecycle
   (start [component]
-    (go-loop []
-      (when-let [task (<! tasks-to-resolve)]
-        (deletefn (str api-url "/tasks/" (:task_guid task)))
-        (recur)))
+    (let [response (chan)]
+      (go-loop []
+        (alt!
+          tasks-to-resolve ([task _]
+                            (deletefn (str api-url "/tasks/" (:task_guid task)) response)
+                            (recur))
+          response         ([_ _]
+                            (recur)))))
     component)
   (stop [component]
     component))
