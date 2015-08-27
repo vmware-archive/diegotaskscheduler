@@ -32,8 +32,7 @@
 
 (defn- completed?
   [t]
-  (and (= "COMPLETED" (:state t))
-       ((complement capacity-failure?) t)))
+  (= "COMPLETED" (:state t)))
 
 (def set-as-queued
   (map #(merge % {:state "QUEUED"})))
@@ -63,7 +62,8 @@
         tasks-from-diego-mult                   (mult tasks-from-diego-input)
         capacity-failures-from-diego            (chan 1 (filter capacity-failure?))
 
-        completed-tasks-for-rate-emitter        (chan 1 (filter completed?))
+        completed-tasks-for-rate-emitter        (chan 1 (filter (every-pred completed?
+                                                                            (complement capacity-failure?))))
         completed-tasks-for-resolver            (chan 1 (filter completed?))
         rate-of-completion                      (chan 1 (tag-all :diegotaskscheduler/rate))
 
