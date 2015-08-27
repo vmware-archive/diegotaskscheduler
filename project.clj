@@ -16,6 +16,10 @@
                  [reagent "0.5.0"]
                  [hiccup "1.0.5"]
                  [leiningen "2.5.1"]
+                 [log4j/log4j "1.2.16" :exclusions [javax.mail/mail
+                                                    javax.jms/jms
+                                                    com.sun.jdmk/jmxtools
+                                                    com.sun.jmx/jmxri]]
                  [org.clojure/tools.logging "0.3.1"]]
 
   :plugins [[lein-environ "1.0.0"]
