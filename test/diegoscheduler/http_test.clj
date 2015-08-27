@@ -1,8 +1,9 @@
 (ns diegoscheduler.http-test
   (:require [diegoscheduler.http :refer :all]
             [clojure.test :refer :all]
-            [clojure.core.async :refer [chan <!! go alt! timeout]]
-            [clj-http.client :as http]))
+            [clojure.core.async :refer [chan <!! >! go go-loop alt! timeout]]
+            [clj-http.client :as http])
+  (:use org.httpkit.fake))
 
 (deftest POSTing
   (testing "Success"
@@ -19,21 +20,36 @@
 (deftest GETing
   (testing "Success puts the JSON parsed body on a channel"
     (let [response (chan)
-          timeout-ch (timeout 1000)]
-      (GET "http://eu.httpbin.org/get" response)
+          timeout-ch (timeout 1000)
+          message (chan)]
       (go
-        (is (= "Basic Og=="
-               (:Authorization (alt!
-                                 response  ([res _] (:headers res))
-                                 timeout-ch "Timed out when waiting for result"))))))))
+        (alt!
+          response  ([res _] (>! message (:foo res)))
+          timeout-ch ([_ _] (>! message "Timed out"))))
+      (with-fake-http ["http://my/place" "{\"foo\": \"bar\"}"]
+        @(GET "http://my/place" response))
+      (is (= "bar" (<!! message))))))
 
 (deftest DELETEing
   (testing "Success puts the JSON parsed body on a channel"
     (let [response (chan)
-          timeout-ch (timeout 1000)]
-      (DELETE "http://eu.httpbin.org/delete" response)
+          timeout-ch (timeout 1000)
+          message (chan)]
       (go
-        (is (= "http://eu.httpbin.org/delete"
-               (alt!
-                 response ([res _] (:url res))
-                 timeout-ch "Timed out")))))))
+        (alt!
+          response ([res _] (>! message res))
+          timeout-ch ([_ _] (>! message "Timed out"))))
+      (with-fake-http ["http://yo.dawg" {:status 200 :body "{\"hi\": \"there\"}"}]
+        @(DELETE "http://yo.dawg" response))
+      (is (= {:hi "there"} (<!! message)))))
+  (testing "Success with empty body doesn't put to the channel"
+    (let [response (chan)
+          timeout-ch (timeout 1)
+          message (chan)]
+      (go
+        (alt!
+          response ([res _] (>! message "unexpected receipt"))
+          timeout-ch ([_ _] (>! message "timeout"))))
+      (with-fake-http ["http://some/place" {:status 200 :body ""}]
+        @(DELETE "http://some/place" response))
+      (is (= "timeout" (<!! message))))))

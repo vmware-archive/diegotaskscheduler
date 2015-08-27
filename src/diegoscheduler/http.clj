@@ -38,7 +38,7 @@
                     :basic-auth (basic-auth url)}
                    (fn [{body :body
                          status :status}]
-                     (if (= 200 status)
+                     (if (and (= 200 status) (not (empty? body)))
                        (put! response (cheshire/parse-string body true))
                        (log/error method
                                   url
