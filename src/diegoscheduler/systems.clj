@@ -60,7 +60,8 @@
 
         tasks-from-diego-input                  (chan)
         tasks-from-diego-mult                   (mult tasks-from-diego-input)
-        capacity-failures-from-diego            (chan 1 (filter capacity-failure?))
+        capacity-failures-from-diego            (chan 1 (filter (every-pred completed?
+                                                                            capacity-failure?)))
 
         completed-tasks-for-rate-emitter        (chan 1 (filter (every-pred completed?
                                                                             (complement capacity-failure?))))
