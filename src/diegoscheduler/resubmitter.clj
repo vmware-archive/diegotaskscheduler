@@ -7,10 +7,14 @@
 (def ^:private parallelism 1)
 (def ^:private close-when-from-closes? false)
 
+(defn- retriever [tasks]
+  (fn [failure]
+    (get @tasks (:task_guid failure))))
+
 (defn- assign-new-guid [tasks]
   (fn [failure]
     (let [new-guid (str (UUID/randomUUID))
-          old-task (get @tasks (:task_guid failure))
+          old-task ((retriever tasks) failure)
           new-task (assoc old-task :task_guid new-guid)]
       (log/info "Assigned guid" (:task_guid new-task)
                 "to failed guid" (:task_guid failure)
@@ -19,7 +23,9 @@
       new-task)))
 
 (defn make-resubmittable [tasks]
-  (map (assign-new-guid tasks)))
+  (comp
+   (filter (retriever tasks))
+   (map (assign-new-guid tasks))))
 
 (defrecord Resubmitter [from-diego to-diego from-user]
   component/Lifecycle
