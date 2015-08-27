@@ -1,8 +1,7 @@
 (ns diegoscheduler.http-test
   (:require [diegoscheduler.http :refer :all]
             [clojure.test :refer :all]
-            [clojure.core.async :refer [chan <!! >! <! go go-loop alt! timeout]]
-            [clj-http.client :as http])
+            [clojure.core.async :refer [chan <!! >! <! go go-loop alt! timeout]])
   (:use org.httpkit.fake))
 
 (deftest POSTing

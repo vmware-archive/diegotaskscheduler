@@ -8,7 +8,6 @@
                  [org.danielsz/system "0.1.8"]
                  [environ "1.0.0"]
                  [http-kit "2.1.18"]
-                 [clj-http "1.1.2" :exclusions [org.clojure/tools.reader]]
                  [compojure "1.3.4"]
                  [com.cognitect/transit-cljs "0.8.220"]
                  [com.taoensso/sente "1.5.0"]

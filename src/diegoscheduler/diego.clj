@@ -3,12 +3,12 @@
             [clojure.core.async :refer [put! <! >! chan alt! go-loop onto-chan]]
             [clojure.string :as s]
             [clojure.tools.logging :as log]
-            [clj-http.client :as client]
+            [cheshire.core :as cheshire]
             [diegoscheduler.http :as http]))
 
 (defn parse-task
   [raw-task]
-  (clojure.walk/keywordize-keys (client/json-decode raw-task)))
+  (cheshire/parse-string raw-task true))
 
 (defn- format-env
   [s]
