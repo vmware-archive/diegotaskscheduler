@@ -8,7 +8,7 @@
   (testing "post fn gets called with /tasks path and task"
     (let [new-tasks (chan)
           call (promise)
-          postfn (fn [url task] (deliver call [url task]))
+          postfn (fn [url task c] (deliver call [url task]))
           task-submitter (new-task-submitter new-tasks
                                              postfn
                                              "http://my.api")

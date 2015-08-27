@@ -1,6 +1,6 @@
 (ns diegoscheduler.task-submitter
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [go-loop <!]]
+            [clojure.core.async :refer [go-loop <! chan]]
             [clojure.tools.logging :as log]))
 
 (defrecord TaskSubmitter
@@ -12,7 +12,7 @@
         (if (:task_guid task)
           (do
             (log/info "POSTing to diego:" (:task_guid task))
-            (postfn (str api-url "/tasks") task))
+            (postfn (str api-url "/tasks") task (chan)))
           (log/error "Got a bad task:" task))
         (recur))))
   (stop [component]

@@ -6,16 +6,14 @@
   (:use org.httpkit.fake))
 
 (deftest POSTing
-  (testing "Success"
-    (is (= {"foo" "bar"}
-           (let [[_ result] (POST "http://eu.httpbin.org/post" {:foo "bar"})]
-             (-> result :data http/json-decode)))))
-  (testing "Unknown Host"
-    (is (= ["Unknown Host" nil] (POST "http://made.up.place.hopefully.will.never.exist/" {:foo "bar"}))))
-  (testing "Connection Refused"
-    (is (= ["Connection Refused", nil] (POST "http://127.0.0.1:9999" {:foo "bar"}))))
-  (testing "400"
-    (is (= ["400" nil] (POST "http://eu.httpbin.org/status/400" {:foo "bar"})))))
+  (testing "JSON parsed body put onto the channel"
+    (let [response (chan)
+          message (promise)]
+      (go
+        (when-let [r (<! response)]
+          (deliver message r)))
+      (POST "http://eu.httpbin.org/post" "foo" response)
+      (is (= "\"foo\"" (:data (deref message 1000 "Timed out")))))))
 
 (deftest GETing
   (testing "Success puts the JSON parsed body on a channel"

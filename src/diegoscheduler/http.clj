@@ -1,22 +1,8 @@
 (ns diegoscheduler.http
-  (:require [clojure.core.async :refer [put! close!]]
+  (:require [clojure.core.async :refer [put!]]
             [clojure.tools.logging :as log]
             [cheshire.core :as cheshire]
-            [clj-http.client :as client]
-            [org.httpkit.client :as httpkit]
-            [slingshot.slingshot :refer [try+]]))
-
-(defn- wrap [f]
-  (try+
-   (f)
-   (catch java.net.UnknownHostException _
-     ["Unknown Host" nil])
-   (catch java.net.ConnectException _
-     ["Connection Refused" nil])
-   (catch [:status 400] {:keys [body]}
-     ["400" nil])
-   (catch [:status 404] {:keys [body]}
-     ["Not Found" nil])))
+            [org.httpkit.client :as httpkit]))
 
 (defn- basic-auth
   [url]
@@ -25,25 +11,26 @@
        first
        rest))
 
-(defn POST [url data]
-  (wrap (fn [] (let [result ((client/post url {:body (client/json-encode data) :as :json})
-                            :body)]
-                [nil result]))))
-
 (defn- req
-  [method url response]
-  (httpkit/request {:url url
-                    :method method
-                    :as :text
-                    :basic-auth (basic-auth url)}
-                   (fn [{body :body
-                         status :status}]
-                     (if (and (= 200 status) (not (empty? body)))
-                       (put! response (cheshire/parse-string body true))
-                       (log/error method
-                                  url
-                                  "gave a"
-                                  status)))))
+  ([method url response]
+   (req method url response {}))
+  ([method url response opts]
+   (httpkit/request (merge {:url url
+                            :method method
+                            :as :text
+                            :basic-auth (basic-auth url)}
+                           opts)
+                    (fn [{body :body
+                          status :status}]
+                      (if (and (= 200 status) (not (empty? body)))
+                        (put! response (cheshire/parse-string body true))
+                        (log/error method
+                                   url
+                                   "gave a"
+                                   status))))))
+
+(defn POST [url data response]
+  (req :post url response {:body (cheshire/generate-string data)}))
 
 (defn GET [url response]
   (req :get url response))
