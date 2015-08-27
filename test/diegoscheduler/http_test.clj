@@ -1,7 +1,7 @@
 (ns diegoscheduler.http-test
   (:require [diegoscheduler.http :refer :all]
             [clojure.test :refer :all]
-            [clojure.core.async :refer [chan <!! >! go go-loop alt! timeout]]
+            [clojure.core.async :refer [chan <!! >! <! go go-loop alt! timeout]]
             [clj-http.client :as http])
   (:use org.httpkit.fake))
 
@@ -20,28 +20,24 @@
 (deftest GETing
   (testing "Success puts the JSON parsed body on a channel"
     (let [response (chan)
-          timeout-ch (timeout 1000)
-          message (chan)]
+          message (promise)]
       (go
-        (alt!
-          response  ([res _] (>! message (:foo res)))
-          timeout-ch ([_ _] (>! message "Timed out"))))
+        (when-let [r (<! response)]
+          (deliver message (:foo r))))
       (with-fake-http ["http://my/place" "{\"foo\": \"bar\"}"]
         @(GET "http://my/place" response))
-      (is (= "bar" (<!! message))))))
+      (is (= "bar" (deref message 1000 "Timed out"))))))
 
 (deftest DELETEing
   (testing "Success puts the JSON parsed body on a channel"
     (let [response (chan)
-          timeout-ch (timeout 1000)
-          message (chan)]
+          message (promise)]
       (go
-        (alt!
-          response ([res _] (>! message res))
-          timeout-ch ([_ _] (>! message "Timed out"))))
+        (when-let [res (<! response)]
+          (deliver message res)))
       (with-fake-http ["http://yo.dawg" {:status 200 :body "{\"hi\": \"there\"}"}]
         @(DELETE "http://yo.dawg" response))
-      (is (= {:hi "there"} (<!! message)))))
+      (is (= {:hi "there"} (deref message 1000 "Timed out")))))
   (testing "Success with empty body doesn't put to the channel"
     (let [response (chan)
           timeout-ch (timeout 1)
