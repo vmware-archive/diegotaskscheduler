@@ -11,6 +11,9 @@
        first
        rest))
 
+(def ^:private success?
+  (set (range 200 300)))
+
 (defn- req
   ([method url response]
    (req method url response {}))
@@ -22,12 +25,11 @@
                            opts)
                     (fn [{body :body
                           status :status}]
-                      (if (and (= 200 status) (not (empty? body)))
+                      (if (and (success? status) (not (empty? body)))
                         (put! response (cheshire/parse-string body true))
-                        (log/error method
-                                   url
-                                   "gave a"
-                                   status))))))
+                        (log/error method url
+                                   "gave a" status
+                                   "with" body))))))
 
 (defn POST [url data response]
   (req :post url response {:body (cheshire/generate-string data)}))
