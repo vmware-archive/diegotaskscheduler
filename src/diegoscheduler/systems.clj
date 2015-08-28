@@ -3,6 +3,7 @@
             [clojure.core.async :as async :refer [chan timeout split mult pipe tap]]
             [clojure.tools.logging :as log]
             [environ.core :refer [env]]
+            [throttler.core :refer [chan-throttler]]
             [diegoscheduler.http :as http]
             [diegoscheduler.cell-poller :refer [new-cell-poller]]
             [diegoscheduler.rate-emitter :refer [new-rate-emitter]]
@@ -75,7 +76,8 @@
                                                               cells-from-diego])
 
         poll-schedule                           (fn [] (timeout update-interval))
-        rate-schedule                           (fn [] (timeout rate-denominator))]
+        rate-schedule                           (fn [] (timeout rate-denominator))
+        throttle                                (chan-throttler 5 :second 100)]
 
     (tap new-tasks-mult user-submissions-for-diego)
     (tap new-tasks-mult user-submissions-for-resubmitter)
@@ -94,14 +96,14 @@
                                          rate-schedule
                                          http/GET
                                          api-url)
-     :task-submitter (new-task-submitter user-submissions-for-diego
+     :task-submitter (new-task-submitter (throttle user-submissions-for-diego)
                                          http/POST
                                          api-url)
      :task-poller    (new-task-poller    tasks-from-diego-input
                                          poll-schedule
                                          http/GET
                                          api-url)
-     :resolver       (new-resolver       completed-tasks-for-resolver
+     :resolver       (new-resolver       (throttle completed-tasks-for-resolver)
                                          http/DELETE
                                          api-url)
      :resubmitter    (new-resubmitter    capacity-failures-from-diego

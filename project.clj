@@ -20,7 +20,8 @@
                                                     javax.jms/jms
                                                     com.sun.jdmk/jmxtools
                                                     com.sun.jmx/jmxri]]
-                 [org.clojure/tools.logging "0.3.1"]]
+                 [org.clojure/tools.logging "0.3.1"]
+                 [throttler "1.0.0"]]
 
   :plugins [[lein-environ "1.0.0"]
             [com.cemerick/clojurescript.test "0.3.3"]]
