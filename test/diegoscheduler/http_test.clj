@@ -22,7 +22,7 @@
         (when-let [r (<! response)]
           (deliver message (:foo r))))
       (with-fake-http ["http://my/place" "{\"foo\": \"bar\"}"]
-        @(GET "http://my/place" response))
+        @(GET "http://foo:bar@my/place" response))
       (is (= "bar" (deref message 1000 "Timed out"))))))
 
 (deftest DELETEing
