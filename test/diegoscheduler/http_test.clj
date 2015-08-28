@@ -12,7 +12,7 @@
         (when-let [r (<! response)]
           (deliver message r)))
       (POST "http://eu.httpbin.org/post" "foo" response)
-      (is (= "\"foo\"" (:data (deref message 1000 "Timed out")))))))
+      (is (= "\"foo\"" (:data (deref message 2000 "Timed out")))))))
 
 (deftest GETing
   (testing "Success puts the JSON parsed body on a channel"
