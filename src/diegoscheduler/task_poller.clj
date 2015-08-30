@@ -1,22 +1,47 @@
 (ns diegoscheduler.task-poller
   (:require [com.stuartsierra.component :as component]
-            [clojure.core.async :refer [put! chan alt! go-loop onto-chan]]
+            [clojure.set :refer [select]]
+            [clojure.core.async :refer [put! chan alt! go-loop onto-chan pipeline]]
             [clojure.tools.logging :as log]))
 
+(defn- remove-dupes
+  [db]
+  (filter (fn [task]
+            (if (@db task)
+              false
+              (do (swap! db conj task)
+                  true)))))
+
+(defn- expire-tasks
+  [db current-time-millis task-lifespan-millis]
+  (select (fn [{task-time-micros :created_at}]
+            (let [task-time-millis (/ task-time-micros 1000)]
+              (< (- current-time-millis task-lifespan-millis)
+                 task-time-millis)))
+          db))
+
 (defrecord TaskPoller
-    [tasks-from-diego schedule getfn api-url stopper]
+    [deduped-tasks schedule clock task-lifespan-millis getfn api-url stopper]
   component/Lifecycle
   (start [component]
-    (let [stopper (chan)
-          all-tasks (chan)]
+    (let [db               (atom #{})
+          stopper          (chan)
+          all-tasks        (chan)
+          tasks-from-diego (chan)]
+      (pipeline 1
+                deduped-tasks
+                (remove-dupes db) tasks-from-diego
+                false)
       (go-loop []
         (alt!
           (schedule) ([_ _]
-                      (getfn (str api-url "/tasks") all-tasks)
-                      (recur))
+                      (let [time-millis (clock)]
+                        (log/info "DB:"
+                                  (swap! db expire-tasks time-millis task-lifespan-millis))
+                        (getfn (str api-url "/tasks") all-tasks)
+                        (recur)))
           all-tasks  ([tasks _]
-                      (onto-chan tasks-from-diego tasks
-                                 false)
+                      (onto-chan tasks-from-diego tasks false)
                       (recur))
           stopper    :stopped))
 
@@ -25,8 +50,10 @@
     (when stopper (put! stopper :please-stop))
     component))
 
-(defn new-task-poller [tasks-from-diego schedule getfn api-url]
-  (map->TaskPoller {:tasks-from-diego tasks-from-diego
+(defn new-task-poller [deduped-tasks schedule clock task-lifespan-millis getfn api-url]
+  (map->TaskPoller {:deduped-tasks deduped-tasks
                     :schedule schedule
+                    :clock clock
+                    :task-lifespan-millis task-lifespan-millis
                     :getfn getfn
                     :api-url api-url}))

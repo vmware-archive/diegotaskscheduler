@@ -38,7 +38,11 @@
                       (fn [{body :body
                             status :status}]
                         (if (and (success? status) (not (empty? body)))
-                          (put! response (cheshire/parse-string body true))
+                          (do
+                            (log/info method stripped-url
+                                      "gave a" status
+                                      "with" body)
+                            (put! response (cheshire/parse-string body true)))
                           (log/error method stripped-url
                                      "gave a" status
                                      "with" body)))))))

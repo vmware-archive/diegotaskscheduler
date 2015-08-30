@@ -18,6 +18,10 @@
   "Poll Diego at this interval, in ms."
   500)
 
+(def task-ttl
+  "Duplicates are removed within this sliding window"
+  20000)
+
 (def rate-denominator
   "Calculate rate as tasks per this many ms.
   NB: The display of this denominator is duplicated in frontend."
@@ -101,6 +105,8 @@
                                          api-url)
      :task-poller    (new-task-poller    tasks-from-diego-input
                                          poll-schedule
+                                         (fn [] (System/currentTimeMillis))
+                                         task-ttl
                                          http/GET
                                          api-url)
      :resolver       (new-resolver       (throttle completed-tasks-for-resolver)
