@@ -32,7 +32,7 @@
                           :do-not-run #{}}))
 
 (defonce chart-data (atom []))
-(defonce y-scale (atom 5))
+(defonce y-scale (atom 2))
 (defonce x-scale (atom 5))
 
 (defn rate-vs-cell
