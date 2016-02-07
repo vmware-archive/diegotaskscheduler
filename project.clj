@@ -15,7 +15,7 @@
                  [org.clojure/core.async "0.1.346.0-17112a-alpha"]
                  [reagent "0.5.0"]
                  [hiccup "1.0.5"]
-                 [leiningen "2.5.1"]
+                 [leiningen "2.6.0"]
                  [log4j/log4j "1.2.16" :exclusions [javax.mail/mail
                                                     javax.jms/jms
                                                     com.sun.jdmk/jmxtools
@@ -30,8 +30,7 @@
   :test-paths ["test"]
   :main diegoscheduler.systems
 
-  :profiles {:dev {:dependencies [[org.clojure/tools.nrepl "0.2.10"]
-                                  [org.clojure/tools.namespace "0.2.10"]
+  :profiles {:dev {:dependencies [[org.clojure/tools.namespace "0.2.10"]
                                   [com.cemerick/piggieback "0.2.1"]
                                   [http-kit.fake "0.2.1"]]
                    :repl-options {:init-ns user
